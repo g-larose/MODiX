@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MODiX", "MODiX\MODiX.csproj", "{58840DCD-6BA1-4709-B1D5-6121F5F99C43}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MODiX", "MODiX\MODiX.csproj", "{58840DCD-6BA1-4709-B1D5-6121F5F99C43}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MODiX.Commands", "MODiX.Commands\MODiX.Commands.csproj", "{B3C38015-3BA0-4EC3-9685-E3AB618D6ED7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MODiX.Data", "MODiX.Data\MODiX.Data.csproj", "{2FDFEE68-C466-45D2-BAEE-1DD11DAA76EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{58840DCD-6BA1-4709-B1D5-6121F5F99C43}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58840DCD-6BA1-4709-B1D5-6121F5F99C43}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58840DCD-6BA1-4709-B1D5-6121F5F99C43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3C38015-3BA0-4EC3-9685-E3AB618D6ED7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3C38015-3BA0-4EC3-9685-E3AB618D6ED7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3C38015-3BA0-4EC3-9685-E3AB618D6ED7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3C38015-3BA0-4EC3-9685-E3AB618D6ED7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FDFEE68-C466-45D2-BAEE-1DD11DAA76EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FDFEE68-C466-45D2-BAEE-1DD11DAA76EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FDFEE68-C466-45D2-BAEE-1DD11DAA76EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FDFEE68-C466-45D2-BAEE-1DD11DAA76EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

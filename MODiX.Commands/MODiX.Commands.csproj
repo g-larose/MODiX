@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Guilded" Version="1.7.1" />
+    <PackageReference Include="Guilded.Base" Version="1.7.0" />
+    <PackageReference Include="Guilded.Commands" Version="1.7.1" />
+    <PackageReference Include="Guilded.Connection" Version="1.7.0" />
+    <PackageReference Include="Guilded.Markdown" Version="1.7.1" />
+    <PackageReference Include="Guilded.Webhook" Version="1.7.0" />
+  </ItemGroup>
+
+</Project>
