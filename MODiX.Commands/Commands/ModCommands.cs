@@ -8,15 +8,18 @@ namespace MODiX.Commands.Commands
     {
         [Command(Aliases= new string[] { "warn", "w" })]
         [Description("warns another server member with a reason for the warning.")]
-        public async Task Warn(CommandEvent invokator, string reason)
+        public async Task Warn(CommandEvent invokator, string user, string[] reason)
         {
             var authorId = invokator.Message.CreatedBy;
             var serverID = invokator.Message.ServerId;
             var author = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
 
+            var args = string.Join(" ", reason);
+
             var embed = new Embed();
-            embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", false));
-            embed.AddField(new EmbedField("Reason:", $"{reason}", false));
+            embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
+            embed.AddField(new EmbedField("Issued To:", $"<@{user}>", true));
+            embed.AddField(new EmbedField("Reason:", $"{args}", false));
 
             await invokator.DeleteAsync();
             await invokator.CreateMessageAsync(embed);
