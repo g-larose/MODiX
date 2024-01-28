@@ -42,14 +42,15 @@ namespace MODiX
                 {
                     var serverId = memJoined.ServerId;
                     var server = await memJoined.ParentClient.GetServerAsync((HashId)serverId);
-                    var defaultChannelId = server.DefaultChannelId;
+                    var defaultChannelId = (Guid)server.DefaultChannelId!;
                     var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
+                    await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36427417);
                     var embed = new Embed();
                     embed.SetDescription(
                         $"Welcome to Rogue Labs <@{memJoined.Id}> read our code of conduct here {channel}");
                     embed.SetFooter("MODiX watching everything ");
                     embed.SetTimestamp(DateTime.Now);
-                    //memJoined.ParentClient.CreateMessageAsync(defaultChannelId, true, false, embed);
+                    await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, true, false, embed);
 
                 });
 
