@@ -29,7 +29,7 @@ namespace MODiX.Commands.Commands
 
         [Command(Aliases = new string[] { "ban", "b" })]
         [Description("ban another server member from the server with a reason for the ban.")]
-        public async Task BAn(CommandEvent invokator, string reason)
+        public async Task Ban(CommandEvent invokator, string reason)
         {
 
         }
