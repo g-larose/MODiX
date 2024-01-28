@@ -59,5 +59,12 @@ namespace MODiX.Commands.Commands
         {
 
         }
+
+        [Command(Aliases = new string[] { "updateDC", "udc" })]
+        [Description("update the default channel")]
+        public async Task UpdateDefaultChannel(CommandEvent invokator, string serverId, string channelId)
+        {
+
+        }
     }
 }
