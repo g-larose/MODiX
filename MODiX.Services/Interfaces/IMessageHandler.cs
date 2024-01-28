@@ -9,6 +9,6 @@ namespace MODiX.Services.Interfaces
 {
     public interface IMessageHandler
     {
-        Task HandleMessage(Message message);
+        Task HandleMessageAsync(Message message);
     }
 }
