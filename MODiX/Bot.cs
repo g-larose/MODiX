@@ -10,6 +10,7 @@ using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Guilded;
 using Guilded.Base;
+using Guilded.Base.Embeds;
 using Guilded.Client;
 using Guilded.Commands;
 using Guilded.Events;
@@ -19,6 +20,8 @@ using MODiX.Commands.Commands;
 using MODiX.Config;
 using MODiX.Data.Config;
 using MODiX.Data.Factories;
+using MODiX.Services.Interfaces;
+using MODiX.Services.Services;
 using Websocket.Client;
 
 namespace MODiX
@@ -28,9 +31,11 @@ namespace MODiX
         private static string? json   = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "config.json"));
         private static string? token  = JsonSerializer.Deserialize<ConfigJson>(json!)!.Token!;
         private static string? prefix = JsonSerializer.Deserialize<ConfigJson>(json!).Prefix!;
-       
+        private IMessageHandler msgHandler { get; set; }
+
         public async Task RunAsync()
         {
+            msgHandler = new MessageHandler();
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             await using var client = new GuildedBotClient(token!)
                 .AddCommands(new ModCommands(), prefix!);
@@ -74,6 +79,31 @@ namespace MODiX
                     Console.WriteLine($"[{date}] [{time}] [INFO]   [MODiX] reconnected to gateway...");
                 });
 
+            client.MessageCreated
+                .Subscribe(async msg =>
+                {
+                    if (msg.Message.CreatedBy == client.Id) return;
+                    var pattern = @"https?://\S+";
+                    if (msg.Content.Contains(pattern))
+                    {
+                        await msgHandler.HandleMessage(msg.Message);
+                    }
+                    else
+                    {
+                        var embedList = new List<Embed>();
+                        var channel =
+                            $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
+                        var embed = new Embed()
+                        {
+                            Description = $"<@{msg.CreatedBy}> testing {channel} to see if this links another channel in code",
+                            Footer = new EmbedFooter("MODiX watching everything "),
+                            Timestamp = DateTime.Now
+                        };
+                        embedList.Add(embed);
+                        await msg.ReplyAsync(embed); //would like to send this private...doesn't work yet.
+                    }
+                });
+
 
             await client.ConnectAsync();
             await client.SetStatusAsync("Watching Everything", 90002579);
@@ -93,6 +123,7 @@ namespace MODiX
             IHost _host = Host.CreateDefaultBuilder().ConfigureServices(services =>
             {
                 services.AddDbContextFactory<ModixDbContext>();
+                services.AddSingleton<IMessageHandler, MessageHandler>();
             }).Build();
 
             _host.Start();
