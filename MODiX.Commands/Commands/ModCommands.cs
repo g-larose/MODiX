@@ -4,6 +4,7 @@ using Guilded.Base.Embeds;
 using Guilded.Commands;
 using Guilded.Content;
 using Guilded.Permissions;
+using Guilded.Users;
 using MODiX.Services.Services;
 
 namespace MODiX.Commands.Commands
@@ -107,7 +108,7 @@ namespace MODiX.Commands.Commands
 
                 var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
                 var date = DateTime.Now.ToShortDateString();
-                Console.WriteLine($"[{date}][{time}] [INFO] [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
+                Console.WriteLine($"[{date}] [{time}] [INFO] [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
                 var embed = new Embed()
                 {
                     Description = $"{amount} messages deleted",

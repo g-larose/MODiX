@@ -35,17 +35,20 @@ namespace MODiX
                 {
                     var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
                     var date = DateTime.Now.ToShortDateString();
-                    Console.WriteLine($"[{date}] [{time}] [{me.ParentClient.Name}] talking to gateway...");
+                    Console.WriteLine($"[{date}] [{time}] [INFO] [{me.ParentClient.Name}] talking to gateway...");
                 });
 
             client.MemberJoined
                 .Subscribe(async memJoined =>
                 {
+                    var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+                    var date = DateTime.Now.ToShortDateString();
                     var serverId = memJoined.ServerId;
                     var server = await memJoined.ParentClient.GetServerAsync((HashId)serverId);
                     var defaultChannelId = (Guid)server.DefaultChannelId!;
                     var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
-                   // await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36427417);
+                    // await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36427417);
+                    Console.WriteLine($"[{date}] [{time}] [INFO] [{memJoined.ParentClient.Name}] {memJoined.Name} joined the server.");
                     var embed = new Embed();
                     embed.SetDescription(
                         $"Welcome to Rogue Labs <@{memJoined.Id}> read our code of conduct here {channel}");
@@ -58,7 +61,7 @@ namespace MODiX
 
             client.Disconnected
                 .Where(e => e.Type != DisconnectionType.NoMessageReceived)
-                .Subscribe(me =>
+                .Subscribe(async me =>
                 {
                     var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
                     var date = DateTime.Now.ToShortDateString();
@@ -91,11 +94,11 @@ namespace MODiX
             var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
             var date = DateTime.Now.ToShortDateString();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"[{date}] [{time}] [MODiX] connected...");
-            Console.WriteLine($"[{date}] [{time}] [MODiX] registering command modules...");
+            Console.WriteLine($"[{date}] [{time}] [INFO] [MODiX] connected...");
+            Console.WriteLine($"[{date}] [{time}] [INFO] [MODiX] registering command modules...");
             await Task.Delay(200);
             Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine($"[{date}] [{time}] [MODiX] listening for events...");
+            Console.WriteLine($"[{date}] [{time}] [INFO] [MODiX] listening for events...");
             await Task.Delay(-1);
         }
 
