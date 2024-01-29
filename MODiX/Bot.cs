@@ -74,7 +74,7 @@ namespace MODiX
                     var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine($"[{date}] [{time}] [INFO]   [MODiX] reconnected to gateway...");
+                    Console.WriteLine($"[{date}] [{time}] [INFO]  [MODiX] reconnected to gateway...");
                 });
 
             client.MessageCreated

@@ -2,6 +2,7 @@
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
+using Guilded.Content;
 using Guilded.Permissions;
 using MODiX.Services.Services;
 
@@ -96,16 +97,17 @@ namespace MODiX.Commands.Commands
             {
                 var channelId = invokator.ChannelId;
                 var channel = await invokator.ParentClient.GetChannelAsync(channelId);
-                var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount);
-                for (int i = 0; i < messages.Count; i++)
+                var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount); // here we can specify a before date. Im thinking about it
+                
+                foreach (var m in messages)
                 {
-                    await messages[i].DeleteAsync();
+                    await m.DeleteAsync();
                     await Task.Delay(100);
                 }
 
-                var timeStamp = string.Join(" ", DateTime.Now.ToShortDateString(),
-                    DateTime.Now.ToLongTimeString());
-                Console.WriteLine($"[{timeStamp}] [INFO] [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
+                var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+                var date = DateTime.Now.ToShortDateString();
+                Console.WriteLine($"[{date}][{time}] [INFO] [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
                 var embed = new Embed()
                 {
                     Description = $"{amount} messages deleted",
