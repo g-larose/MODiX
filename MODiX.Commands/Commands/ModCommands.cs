@@ -1,7 +1,9 @@
-﻿using Guilded.Base;
+﻿using System.Drawing;
+using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
 using Guilded.Permissions;
+using MODiX.Services.Services;
 
 namespace MODiX.Commands.Commands
 {
@@ -55,7 +57,7 @@ namespace MODiX.Commands.Commands
 
         [Command(Aliases = new string[] { "ban", "b" })]
         [Description("ban another server member from the server with a reason for the ban.")]
-        public async Task BAn(CommandEvent invokator, string reason)
+        public async Task Ban(CommandEvent invokator, string reason)
         {
 
         }
@@ -79,6 +81,44 @@ namespace MODiX.Commands.Commands
         public async Task UpdateDefaultChannel(CommandEvent invokator, string serverId, string channelId)
         {
 
+        }
+
+        [Command(Aliases = new string[] { "purge", "p" })]
+        [Description("removes a set amount of channel messages")]
+        public async Task Purge(CommandEvent invokator, uint amount)
+        {
+            var authorId = invokator.Message.CreatedBy;
+            var serverId = invokator.Message.ServerId;
+            var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, authorId);
+
+            if (permissions.Contains(Permission.ManageMessages))
+            {
+                var channelId = invokator.ChannelId;
+                var channel = await invokator.ParentClient.GetChannelAsync(channelId);
+                var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount);
+                for (int i = 0; i < messages.Count; i++)
+                {
+                    await messages[i].DeleteAsync();
+                    await Task.Delay(100);
+                }
+
+                var timeStamp = string.Join(" ", DateTime.Now.ToShortDateString(),
+                    DateTime.Now.ToLongTimeString());
+                Console.WriteLine($"[{timeStamp}] [INFO] [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
+                var embed = new Embed()
+                {
+                    Description = $"{amount} messages deleted",
+                    Color = EmbedColorService.GetColor("orange", Color.Orange),
+                    Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
+                    Timestamp = DateTime.Now
+                };
+                var deleteMessage = await invokator.CreateMessageAsync(embed);
+            }
+            else
+            {
+                await invokator.ReplyAsync($"`{author}` you do not have the permission to manage messages, command ignored!");
+            }
         }
     }
 }

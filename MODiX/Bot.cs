@@ -87,13 +87,14 @@ namespace MODiX
 
             await client.ConnectAsync();
             await client.SetStatusAsync("Watching Everything", 90002579);
+            BotTimerService bts = new();
             var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
             var date = DateTime.Now.ToShortDateString();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine($"[{date}] [{time}] [MODiX] connected...");
             Console.WriteLine($"[{date}] [{time}] [MODiX] registering command modules...");
             await Task.Delay(200);
-             Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine($"[{date}] [{time}] [MODiX] listening for events...");
             await Task.Delay(-1);
         }

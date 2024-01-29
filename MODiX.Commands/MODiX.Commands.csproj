@@ -13,6 +13,12 @@
     <PackageReference Include="Guilded.Connection" Version="1.7.0" />
     <PackageReference Include="Guilded.Markdown" Version="1.7.1" />
     <PackageReference Include="Guilded.Webhook" Version="1.7.0" />
+    <PackageReference Include="Humanizer" Version="2.14.1" />
+    <PackageReference Include="Humanizer.Core" Version="2.14.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MODiX.Services\MODiX.Services.csproj" />
   </ItemGroup>
 
 </Project>

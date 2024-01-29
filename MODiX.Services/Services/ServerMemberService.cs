@@ -20,14 +20,21 @@ namespace MODiX.Services.Services
             throw new NotImplementedException();
         }
 
+        public Task<string[]> GetMembersPermissions()
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<LocalServerMember> GetServerMemberAsync(HashId memberId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<List<Member>> GetServerMembersAsync(GuildedBotClient client, HashId serverId)
+        public async Task<IList<MemberSummary>> GetServerMembersAsync(GuildedBotClient client, HashId serverId)
         {
-            throw new NotImplementedException();
+            var server = await client.GetServerAsync(serverId);
+            var members = await client.GetMembersAsync(serverId);
+            return members;
         }
 
         public Task<bool> KickServerMemberAsync(HashId memberId)
@@ -35,11 +42,11 @@ namespace MODiX.Services.Services
             throw new NotImplementedException();
         }
 
-        public async Task<List<Member>> LoadServerMembersAsync(GuildedBotClient client, HashId serverId)
+        public async Task<IList<MemberSummary>> LoadServerMembersAsync(GuildedBotClient client, HashId serverId)
         {
             var server = await client.GetServerAsync(serverId);
             var members = await client.GetMembersAsync(serverId);
-            return null;
+            return members;
         }
 
         public Task<bool> MuteMemberAsync(HashId memberId)
