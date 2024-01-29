@@ -18,7 +18,7 @@ namespace MODiX.Commands.Commands
 
             var embed = new Embed();
             embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
-            embed.AddField(new EmbedField("Issued To:", $"<@{user}>", true));
+            embed.AddField(new EmbedField("Issued To:", $"{user}", true));
             embed.AddField(new EmbedField("Reason:", $"{args}", false));
 
             await invokator.DeleteAsync();
