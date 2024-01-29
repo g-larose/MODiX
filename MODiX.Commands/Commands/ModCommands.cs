@@ -1,6 +1,7 @@
 ﻿using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
+using Guilded.Permissions;
 
 namespace MODiX.Commands.Commands
 {
@@ -13,16 +14,29 @@ namespace MODiX.Commands.Commands
             var authorId = invokator.Message.CreatedBy;
             var serverID = invokator.Message.ServerId;
             var author = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+            var permissions = await author.GetPermissionsAsync();
+            if (permissions.Contains(Permission.ManageChannels)) // if the message invokor doesn't have the correct permissions we ignore the command
+            {
+                var args = string.Join(" ", reason);
 
-            var args = string.Join(" ", reason);
+                var embed = new Embed();
+                embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
+                embed.AddField(new EmbedField("Issued To:", $"<@{user}>", true));
+                embed.AddField(new EmbedField("Reason:", $"{args}", false));
 
-            var embed = new Embed();
-            embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
-            embed.AddField(new EmbedField("Issued To:", $"<@{user}>", true));
-            embed.AddField(new EmbedField("Reason:", $"{args}", false));
+                await invokator.DeleteAsync();
+                await invokator.CreateMessageAsync(embed);
+            }
+            else
+            {
+                var embed = new Embed();
+                embed.SetDescription(
+                    $"<@{author.Id}> you do not have the permissions to execute this command, command ignored!");
 
-            await invokator.DeleteAsync();
-            await invokator.CreateMessageAsync(embed);
+                await invokator.Message.DeleteAsync();
+                await invokator.ReplyAsync(embed);
+            }
+            
         }
 
         [Command(Aliases = new string[] { "mute", "m" })]

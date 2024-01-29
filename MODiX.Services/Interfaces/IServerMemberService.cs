@@ -8,6 +8,7 @@ namespace MODiX.Services.Interfaces
     public interface IServerMemberService
     {
         Task<List<Member>> GetServerMembersAsync(GuildedBotClient client, HashId serverId);
+        Task<string[]> GetMembersPermissions()
         Task<LocalServerMember> GetServerMemberAsync(HashId memberId);
         Task<bool> AddWarningAsync(HashId memberId);
         Task<bool> KickServerMemberAsync(HashId memberId);
