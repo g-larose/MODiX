@@ -16,7 +16,7 @@ namespace MODiX.Services.Services
     {
         public async Task HandleMessageAsync(Message message)
         {
-            var pattern = @"https?://|www\S+";
+            var pattern = @"https?://\S+|guilded.gg|www\S+|http?://\S+";
             var regex = new Regex(pattern);
             if (regex.IsMatch(message.Content!))//convert this into a switch expression to handle different senerios.
             {
