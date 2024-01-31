@@ -9,10 +9,10 @@ namespace MODiX.Services.Services
 {
     public class EmbedColorService
     {
-        public static string GenerateRandomEmbedColor()
+        public static int GenerateRandomEmbedColor()
         {
-            var rng = new Random();
-            var color = string.Format("#{0:X6}", rng.Next(0x1000000));
+            var rng = new Random(); 
+            var color = rng.Next(0x1000000);
             return color;
         }
 

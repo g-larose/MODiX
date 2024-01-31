@@ -20,6 +20,7 @@ namespace MODiX
         private static string? json   = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "config.json"));
         private static string? token  = JsonSerializer.Deserialize<ConfigJson>(json!)!.Token!;
         private static string? prefix = JsonSerializer.Deserialize<ConfigJson>(json!).Prefix!;
+        private static string? timePattern = "hh:mm:ss tt";
         private IMessageHandler msgHandler { get; set; }
 
         public async Task RunAsync()
@@ -33,21 +34,21 @@ namespace MODiX
             client.Prepared
                 .Subscribe(async me =>
                 {
-                    var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+                    var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
-                    Console.WriteLine($"[{date}] [{time}] [INFO] [{me.ParentClient.Name}] talking to gateway...");
+                    Console.WriteLine($"[{date}] [{time}] [INFO]  [{me.ParentClient.Name}] talking to gateway...");
                 });
 
             client.MemberJoined
                 .Subscribe(async memJoined =>
                 {
-                    var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+                    var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     var serverId = memJoined.ServerId;
                     var server = await memJoined.ParentClient.GetServerAsync((HashId)serverId);
                     var defaultChannelId = (Guid)server.DefaultChannelId!;
                     var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
-                    // await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36427417);
+                    await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36453250);
                     Console.WriteLine($"[{date}] [{time}] [INFO] [{memJoined.ParentClient.Name}] {memJoined.Name} joined the server.");
                     var embed = new Embed();
                     embed.SetDescription(
@@ -63,7 +64,7 @@ namespace MODiX
                 .Where(e => e.Type != DisconnectionType.NoMessageReceived)
                 .Subscribe(async me =>
                 {
-                    var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+                    var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     Console.WriteLine($"[{date}] [{time}] [ERROR] [MODiX] disconnected from gateway...");
@@ -74,7 +75,8 @@ namespace MODiX
                 .Where(x => x.Type != ReconnectionType.NoMessageReceived)
                 .Subscribe(me =>
                 {
-                    var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+
+                    var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine($"[{date}] [{time}] [INFO]  [MODiX] reconnected to gateway...");
@@ -91,7 +93,7 @@ namespace MODiX
             await client.ConnectAsync();
             await client.SetStatusAsync("Watching Everything", 90002579);
             BotTimerService bts = new();
-            var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+            var time = DateTime.Now.ToString(timePattern);
             var date = DateTime.Now.ToShortDateString();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine($"[{date}] [{time}] [INFO] [MODiX] connected...");
