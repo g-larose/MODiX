@@ -10,6 +10,8 @@
     <Folder Include="Features\Economy\" />
     <Folder Include="Features\Dice\" />
     <Folder Include="Features\Blackjack\" />
+    <Folder Include="Features\Giveaways\" />
+    <Folder Include="Features\SupportTickets\" />
     <Folder Include="Features\Trivia\" />
   </ItemGroup>
 

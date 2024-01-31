@@ -20,6 +20,7 @@ namespace MODiX.Commands.Commands
         //member commands
         // uptime, profile (mentioned member profile), help, serverInfo, wikipedia search, meme
         private MusicPlayerProvider player = new();
+        private static string? timePattern = "hh:mm:ss tt";
         [Command(Aliases = new string[] { "alive", "uptime", "online" })]
         [Description("returns how long the bot has been online since the last restart")]
         public async Task Uptime(CommandEvent ctx)
@@ -72,10 +73,20 @@ namespace MODiX.Commands.Commands
         [Description("list of bot commands")]
         public async Task Help(CommandEvent invokator)
         {
-            var authorId = invokator.Message.CreatedBy;
-            var serverId = invokator.ServerId;
-            var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
-            var embed = new Embed();
+            try
+            {
+                var authorId = invokator.Message.CreatedBy;
+                var serverId = invokator.ServerId;
+                var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+                var embed = new Embed();
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
+            
         }
 
 
@@ -83,7 +94,42 @@ namespace MODiX.Commands.Commands
         [Description("list the bot info")]
         public async Task BotInfo(CommandEvent invokator)
         {
+            try
+            {
+                var botId = invokator.ParentClient.Id;
+                var serverId = invokator.Message.ServerId;
+                var bot = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, (HashId)botId!);
+                var botAvatar = bot.Avatar!;
+                var botName = bot.Name;
+                var botUptime = BotTimerService.GetBotUptime();
+                var creatorName = "Async<RogueLabs>";
 
+                var embed = new Embed();
+                embed.SetTitle($"{botName} Info");
+                embed.AddField("Server Id", $"`{serverId}`", true);
+                embed.AddField("Bot Id", $"`{botId}`", true);
+                embed.AddField("Bot Name", $"`{botName}`", true);
+                embed.AddField("Uptime", $"`{botUptime}`", true);
+                embed.AddField("Creator", $"`{creatorName}`", true);
+                embed.SetThumbnail(botAvatar);
+                embed.SetColor(EmbedColorService.GetColor("blurple", Color.MediumPurple));
+                embed.SetFooter($"{botName} watching everything ");
+                embed.SetTimestamp(DateTime.Now);
+
+                await invokator.ReplyAsync(embed);
+
+            }
+            catch (Exception e)
+            {
+                var time = DateTime.Now.ToString(timePattern);
+                var date = DateTime.Now.ToShortDateString();
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine($"[{date}][{time}][ERROR]  [MODiX] [{e.Message}]");
+                await invokator.ReplyAsync(
+                    $"`[ERROR]` something went wrong while fetching bot info. please try again later.");
+                return;
+            }
+            
         }
 
         //test command for playing youtube music...doesn't work yet
