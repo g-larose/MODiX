@@ -98,7 +98,7 @@ namespace MODiX.Commands.Commands
             {
                 var channelId = invokator.ChannelId;
                 var channel = await invokator.ParentClient.GetChannelAsync(channelId);
-                var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount); // here we can specify a before date. Im thinking about it
+                var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount + 1); // here we can specify a before date. Im thinking about it
                 
                 foreach (var m in messages)
                 {

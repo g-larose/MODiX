@@ -14,16 +14,48 @@ namespace MODiX.Services.Services
 {
     public class MessageHandler : IMessageHandler
     {
+        private string? MessageAuthor { get; set; }
+        private string? Message { get; set; }
+        private uint MessageCount { get; set; }
+
         public async Task HandleMessageAsync(Message message)
         {
+            var authorId = message.CreatedBy;
+            var serverId = message.ServerId;
+            var channelId = message.ChannelId;
+            var author = await message.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+
+            if (message!.Content!.Equals(Message))
+            {
+                MessageAuthor = author.Name;
+                MessageCount++;
+                if (MessageCount > 3)
+                {
+                    var messages = await message.ParentClient.GetMessagesAsync(channelId, false, MessageCount - 1);
+                    foreach (var mes in messages)
+                    {
+                       await mes.DeleteAsync();
+                       await Task.Delay(100);
+                    }
+                    
+                    await message.ReplyAsync(
+                        $"{MessageAuthor} you are sending the same message to fast, slow down or you will be muted! {MessageCount}");
+                    MessageCount = 0;
+                    MessageAuthor = "";
+                    Message = null;
+                }
+            }
+            else
+            {
+                MessageCount = 1;
+                MessageAuthor = author.Name;
+                Message = message.Content;
+            }
             var pattern = @"https?://\S+|guilded.gg|www\S+|http?://\S+";
             var regex = new Regex(pattern);
+
             if (regex.IsMatch(message.Content!))//convert this into a switch expression to handle different senerios.
             {
-                var channelId = message.ChannelId;
-                var serverId = message.ServerId;
-                var authorId = message.CreatedBy;
-                var author = await message.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                 var permissions = await author.GetPermissionsAsync();
                 if (!permissions.Contains(Permission.ManageChannels))
                 {
