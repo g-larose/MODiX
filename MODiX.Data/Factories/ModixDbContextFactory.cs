@@ -15,7 +15,7 @@ namespace MODiX.Data.Factories
     {
         public ModixDbContext CreateDbContext(string[] args)
         {
-            var json = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Data", "Config", "config.json"));
+            var json = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "config.json"));
             var conStr = JsonSerializer.Deserialize<ConfigJson>(json)!.ConnectionString;
             var options = new DbContextOptionsBuilder<ModixDbContext>();
             options.UseNpgsql(conStr);

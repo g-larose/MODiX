@@ -5,7 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
+    <PublishAot>false</PublishAot>
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
@@ -40,10 +40,6 @@
     <ProjectReference Include="..\MODiX.Commands\MODiX.Commands.csproj" />
     <ProjectReference Include="..\MODiX.Data\MODiX.Data.csproj" />
     <ProjectReference Include="..\MODiX.Services\MODiX.Services.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Config\" />
   </ItemGroup>
 
 </Project>

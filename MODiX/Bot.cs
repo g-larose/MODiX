@@ -4,6 +4,7 @@ using Guilded;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
+using Guilded.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MODiX.Commands.Commands;
@@ -87,6 +88,21 @@ namespace MODiX
                 {
                     if (msg.Message.CreatedBy == client.Id) return;
                     await msgHandler.HandleMessageAsync(msg.Message).ConfigureAwait(true);
+                });
+
+            client.MessageDeleted
+                .Subscribe(async msgHandler =>
+                {
+                    if (msgHandler.CreatedBy.Equals(client.Id)) return;
+                    var authorId = msgHandler.CreatedBy;
+                    var serverID = msgHandler.ServerId;
+                    var author = await msgHandler.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+                });
+
+            client.MemberRemoved
+                .Subscribe(async memRemoved =>
+                {
+
                 });
 
 
