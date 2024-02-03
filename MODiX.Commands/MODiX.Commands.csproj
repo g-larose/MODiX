@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MODiX.Data\MODiX.Data.csproj" />
     <ProjectReference Include="..\MODiX.Services\MODiX.Services.csproj" />
   </ItemGroup>
 

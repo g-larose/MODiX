@@ -5,12 +5,15 @@ using Guilded.Commands;
 using Guilded.Content;
 using Guilded.Permissions;
 using Guilded.Users;
+using MODiX.Data.Config;
+using MODiX.Services.Models;
 using MODiX.Services.Services;
 
 namespace MODiX.Commands.Commands
 {
     public class ModCommands : CommandModule
     {
+        private readonly ModixDbContext dbContext = new ModixDbContext();
         [Command(Aliases= new string[] { "warn", "w" })]
         [Description("warns another server member with a reason for the warning.")]
         public async Task Warn(CommandEvent invokator, string user, string[] reason)
@@ -27,6 +30,34 @@ namespace MODiX.Commands.Commands
                 embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
                 embed.AddField(new EmbedField("Issued To:", $"<@{user}>", true));
                 embed.AddField(new EmbedField("Reason:", $"{args}", false));
+                var _userId = invokator!.Mentions!.Users!.First().Id;
+                var _user = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, _userId);
+                var userXp = await invokator.ParentClient.AddXpAsync((HashId)serverID!, _userId, 0);
+                var warnedUser = dbContext!.ServerMembers!.Where(x => x.Nickname == _user.Name).ToList();
+                if (warnedUser.Count > 0)
+                {
+                    warnedUser.FirstOrDefault().Warnings = 1;
+                    await dbContext.SaveChangesAsync();
+                }
+                else
+                {
+                    var newUser = new LocalServerMember();
+                    newUser.Id = Guid.NewGuid();
+                    newUser.Nickname = _user.Name;
+                    newUser.CreatedAt = DateTime.UtcNow;
+                    newUser.JoinedAt = _user.JoinedAt;
+                    newUser.Warnings = 1;
+                    newUser.Messages = null;
+                    newUser.ServerId = serverID.ToString();
+                    newUser.Xp = int.Parse(userXp.ToString());
+                    newUser.RoleIds = Array.Empty<int>();
+
+                    await dbContext.AddAsync(newUser);
+                    await dbContext.SaveChangesAsync();
+
+                }
+                    
+
 
                 await invokator.DeleteAsync();
                 await invokator.CreateMessageAsync(embed);

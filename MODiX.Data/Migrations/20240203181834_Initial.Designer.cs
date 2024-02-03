@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    [Migration("20240203093828_Initial")]
+    [Migration("20240203181834_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
