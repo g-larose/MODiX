@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Humanizer.Localisation;
-using MODiX.Services.Models;
+using MODiX.Data.Models;
 
 namespace MODiX.Services.Services
 {

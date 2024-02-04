@@ -23,7 +23,6 @@ namespace MODiX
         private static string? prefix = JsonSerializer.Deserialize<ConfigJson>(json!).Prefix!;
         private static string? timePattern = "hh:mm:ss tt";
         private IMessageHandler msgHandler { get; set; }
-
         public async Task RunAsync()
         {
             msgHandler = new MessageHandler();
@@ -68,7 +67,7 @@ namespace MODiX
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkRed;
-                    Console.WriteLine($"[{date}][{time}][ERROR]  [MODiX] disconnected from gateway...");
+                    Console.WriteLine($"[{date}][{time}][ERROR] [{client.Name}] disconnected from gateway...");
                 });
 
             client.Reconnected
@@ -80,23 +79,25 @@ namespace MODiX
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] reconnected to gateway...");
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] reconnected to gateway...");
                 });
 
             client.MessageCreated
                 .Subscribe(async msg =>
                 {
                     if (msg.Message.CreatedBy == client.Id) return;
-                    await msgHandler.HandleMessageAsync(msg.Message).ConfigureAwait(true);
+                    await msgHandler.HandleMessageAsync(msg.Message);
                 });
 
             client.MessageDeleted
-                .Subscribe(async msgHandler =>
+                .Subscribe(async msg =>
                 {
-                    if (msgHandler.CreatedBy.Equals(client.Id)) return;
-                    var authorId = msgHandler.CreatedBy;
-                    var serverID = msgHandler.ServerId;
-                    var author = await msgHandler.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+                    if (msg.CreatedBy.Equals(client.Id)) return;
+                    var authorId = msg.CreatedBy;
+                    var serverID = msg.ServerId;
+                    //var author = await msg.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+                    //TODO: handle deleted messages.
+                    
                 });
 
             client.MemberRemoved
@@ -112,23 +113,13 @@ namespace MODiX
             var time = DateTime.Now.ToString(timePattern);
             var date = DateTime.Now.ToShortDateString();
             Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] connected...");
-            Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] registering command modules...");
+            Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] connected...");
+            Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] registering command modules...");
             await Task.Delay(200);
             Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] listening for events...");
+            Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] listening for events...");
             await Task.Delay(-1);
         }
 
-        private void ConfigureServices()
-        {
-            IHost _host = Host.CreateDefaultBuilder().ConfigureServices(services =>
-            {
-                services.AddDbContextFactory<ModixDbContext>();
-                services.AddSingleton<IMessageHandler, MessageHandler>();
-            }).Build();
-
-            _host.Start();
-        }
     }
 }

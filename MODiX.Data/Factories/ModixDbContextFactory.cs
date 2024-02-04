@@ -6,14 +6,14 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using MODiX.Config;
-using MODiX.Data.Config;
+using MODiX.Data.Models;
+
 
 namespace MODiX.Data.Factories
 {
     public class ModixDbContextFactory : IDesignTimeDbContextFactory<ModixDbContext>
     {
-        public ModixDbContext CreateDbContext(string[] args)
+        public ModixDbContext CreateDbContext(string[] args = null)
         {
             var json = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "config.json"));
             var conStr = JsonSerializer.Deserialize<ConfigJson>(json)!.ConnectionString;

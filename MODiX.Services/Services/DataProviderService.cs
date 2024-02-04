@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MODiX.Data.Factories;
 using MODiX.Data.Models;
 using MODiX.Services.Interfaces;
 
@@ -11,9 +12,14 @@ namespace MODiX.Services.Services
 {
     public class DataProviderService : IDataProvider
     {
+        private readonly ModixDbContextFactory dbFactory;
         public List<LocalServerMember> GetAllServerMembers()
         {
-            throw new NotImplementedException();
+            var db = dbFactory.CreateDbContext();
+            var members = db!.ServerMembers!.ToList();
+
+
+            return members;
         }
 
         public LocalServerMember GetMemberFromDb(string username)
@@ -36,9 +42,16 @@ namespace MODiX.Services.Services
             throw new NotImplementedException();
         }
 
-        public LocalServerMember SaveMemberToDb(LocalServerMember member)
+        public void SaveMemberToDb(LocalServerMember member)
         {
-            throw new NotImplementedException();
+            var db = dbFactory.CreateDbContext();
+            var user = db!.ServerMembers!.Where(x => x.Nickname.Equals(member.Nickname));
+            if (user is null)
+            {
+                db!.ServerMembers!.Add(member);
+                db.SaveChanges();
+            }
+
         }
     }
 }

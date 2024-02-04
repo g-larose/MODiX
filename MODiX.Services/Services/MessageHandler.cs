@@ -19,56 +19,65 @@ namespace MODiX.Services.Services
         private string? Message { get; set; }
         private uint MessageCount { get; set; }
 
+        private string? timePattern = "hh:mm:ss tt";
         public async Task HandleMessageAsync(Message message)
         {
             var authorId = message.CreatedBy;
             var serverId = message.ServerId;
             var channelId = message.ChannelId;
-            var author = await message.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
-
-            if (message!.Content!.Equals(Message))
+            try
             {
-                MessageAuthor = author.Name;
-                MessageCount++;
-                if (MessageCount > 3)
+                var author = await message.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+
+                if (message!.Content!.Equals(Message))
                 {
-                    var messages = await message.ParentClient.GetMessagesAsync(channelId, false, MessageCount - 1);
-                    foreach (var mes in messages)
+                    MessageAuthor = author.Name;
+                    MessageCount++;
+                    if (MessageCount > 3)
                     {
-                       await mes.DeleteAsync();
-                       await Task.Delay(100);
-                    }
-                    
-                    await message.ReplyAsync(
-                        $"{MessageAuthor} you are sending the same message to fast, slow down or you will be muted! {MessageCount}");
-                    MessageCount = 0;
-                    MessageAuthor = "";
-                    Message = null;
-                }
-            }
-            else
-            {
-                MessageCount = 1;
-                MessageAuthor = author.Name;
-                Message = message.Content;
-            }
-            var pattern = @"https?://\S+|guilded.gg|www\S+|http?://\S+";
-            var regex = new Regex(pattern);
+                        var messages = await message.ParentClient.GetMessagesAsync(channelId, false, MessageCount - 1);
+                        foreach (var mes in messages)
+                        {
+                            await mes.DeleteAsync();
+                            await Task.Delay(100);
+                        }
 
-            if (regex.IsMatch(message.Content!))//convert this into a switch expression to handle different senerios.
-            {
-                var permissions = await author.GetPermissionsAsync();
-                if (!permissions.Contains(Permission.ManageChannels))
+                        await message.ReplyAsync(
+                            $"{MessageAuthor} you are sending the same message to fast, slow down or you will be muted! {MessageCount}");
+                        MessageCount = 0;
+                        MessageAuthor = "";
+                        Message = null;
+                    }
+                }
+                else
                 {
-                    await message.ParentClient.DeleteMessageAsync(channelId, message.Id);
-                    await message.ReplyAsync(
-                        $"`{author.Name}` your message contained block content and was removed");
+                    MessageCount = 1;
+                    MessageAuthor = author.Name;
+                    Message = message.Content;
+                }
+                //var pattern = @"https?://\S+|guilded.gg|www\S+|http?://\S+";
+                var pattern = @"(?:https?|ftp):\/\/(?:[\w-]+\.)+[\w-]+(?:\/[\w@?^=%&/~+#-]*)?|guilded\.gg|discord\.gg";
+                var regex = new Regex(pattern);
+
+                if (regex.IsMatch(message.Content!))//convert this into a switch expression to handle different senerios.
+                {
+                    var permissions = await author.GetPermissionsAsync();
+                    if (!permissions.Contains(Permission.ManageChannels))
+                    {
+                        await message.ParentClient.DeleteMessageAsync(channelId, message.Id);
+                        await message.ReplyAsync(
+                            $"`{author.Name}` your message contained block content and was removed");
+                    }
                 }
             }
-            else
+            catch (Exception e)
             {
-                
+                var time = DateTime.Now.ToString(timePattern);
+                var date = DateTime.Now.ToShortDateString();
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.WriteLine($"[{date}][{time}][ERROR]  [{message.ParentClient.Name}] {e.Message}");
             }
+            
         }
     }
 }

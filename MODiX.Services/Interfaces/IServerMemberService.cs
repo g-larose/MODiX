@@ -1,7 +1,7 @@
 ﻿using Guilded;
 using Guilded.Base;
 using Guilded.Servers;
-using MODiX.Services.Models;
+using MODiX.Data.Models;
 
 namespace MODiX.Services.Interfaces
 {

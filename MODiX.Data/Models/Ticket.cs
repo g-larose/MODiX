@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MODiX.Data.Models;
-using MODiX.Services.Enums;
+﻿using MODiX.Data.Enums;
+
 
 namespace MODiX.Data.Models
 {

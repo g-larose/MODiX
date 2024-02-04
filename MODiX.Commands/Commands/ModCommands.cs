@@ -86,7 +86,7 @@ namespace MODiX.Commands.Commands
         [Description("mutes a server member with a reason why they were muted.")]
         public async Task Mute(CommandEvent invokator, string reason)
         {
-
+           
         }
 
         [Command(Aliases = new string[] { "kick", "k" })]
@@ -152,6 +152,7 @@ namespace MODiX.Commands.Commands
                 {
                     Description = $"{amount} messages deleted",
                     Color = EmbedColorService.GetColor("orange", Color.Orange),
+                    Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
                     Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
                     Timestamp = DateTime.Now
                 };

@@ -3,8 +3,8 @@ using System.Reactive.Threading.Tasks;
 using Guilded;
 using Guilded.Base;
 using Guilded.Servers;
+using MODiX.Data.Models;
 using MODiX.Services.Interfaces;
-using MODiX.Services.Models;
 
 namespace MODiX.Services.Services
 {

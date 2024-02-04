@@ -11,7 +11,7 @@ namespace MODiX.Services.Interfaces
     public interface IDataProvider
     {
         LocalServerMember GetMemberFromDb(string username);
-        LocalServerMember SaveMemberToDb(LocalServerMember member);
+        void SaveMemberToDb(LocalServerMember member);
         List<LocalServerMember> GetAllServerMembers();
         LocalServerMember RemoveServerMemberFromDb(string username);
         int GetMemberXpByName(string username);
