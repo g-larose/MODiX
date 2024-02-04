@@ -2,8 +2,9 @@
 using Guilded.Content;
 using Guilded.Servers;
 using Guilded.Users;
+using MODiX.Data.Models;
 
-namespace MODiX.Services.Models
+namespace MODiX.Data.Models
 {
     public class LocalServerMember
     {

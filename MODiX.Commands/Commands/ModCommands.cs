@@ -5,8 +5,8 @@ using Guilded.Commands;
 using Guilded.Content;
 using Guilded.Permissions;
 using Guilded.Users;
-using MODiX.Data.Config;
-using MODiX.Services.Models;
+using MODiX.Data;
+using MODiX.Data.Models;
 using MODiX.Services.Services;
 
 namespace MODiX.Commands.Commands
@@ -27,33 +27,41 @@ namespace MODiX.Commands.Commands
                 var args = string.Join(" ", reason);
 
                 var embed = new Embed();
-                embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
-                embed.AddField(new EmbedField("Issued To:", $"<@{user}>", true));
-                embed.AddField(new EmbedField("Reason:", $"{args}", false));
+               
                 var _userId = invokator!.Mentions!.Users!.First().Id;
                 var _user = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, _userId);
                 var userXp = await invokator.ParentClient.AddXpAsync((HashId)serverID!, _userId, 0);
                 var warnedUser = dbContext!.ServerMembers!.Where(x => x.Nickname == _user.Name).ToList();
                 if (warnedUser.Count > 0)
                 {
-                    warnedUser.FirstOrDefault().Warnings = 1;
+                    warnedUser!.FirstOrDefault()!.Warnings += 1;
+                    embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
+                    embed.AddField(new EmbedField("Issued To:", $"<@{warnedUser!.FirstOrDefault()!.Nickname}>", true));
+                    embed.AddField(new EmbedField("Reason:", $"{args}", false));
+                    embed.AddField(new EmbedField("Warnings:", $"{warnedUser!.FirstOrDefault()!.Warnings + 1}", false));
                     await dbContext.SaveChangesAsync();
                 }
                 else
                 {
                     var newUser = new LocalServerMember();
                     newUser.Id = Guid.NewGuid();
+                    newUser.UserId = _user.Id.ToString();
+                    newUser.ServerId = serverID.ToString();
                     newUser.Nickname = _user.Name;
                     newUser.CreatedAt = DateTime.UtcNow;
                     newUser.JoinedAt = _user.JoinedAt;
-                    newUser.Warnings = 1;
+                    newUser.Warnings += 1;
                     newUser.Messages = null;
-                    newUser.ServerId = serverID.ToString();
                     newUser.Xp = int.Parse(userXp.ToString());
                     newUser.RoleIds = Array.Empty<int>();
 
                     await dbContext.AddAsync(newUser);
                     await dbContext.SaveChangesAsync();
+
+                    embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
+                    embed.AddField(new EmbedField("Issued To:", $"<@{newUser.Nickname}>", true));
+                    embed.AddField(new EmbedField("Reason:", $"{args}", false));
+                    embed.AddField(new EmbedField("Warnings:", $"{newUser.Warnings + 1}", false));
 
                 }
                     

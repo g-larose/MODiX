@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Guilded.Content;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using MODiX.Config;
-using MODiX.Services.Models;
+using MODiX.Data.Models;
 
-namespace MODiX.Data.Config
+
+namespace MODiX.Data
 {
     public class ModixDbContext: DbContext
     {
@@ -18,7 +12,19 @@ namespace MODiX.Data.Config
         public DbSet<Ticket>? Tickets { get; set; }
 
         public ModixDbContext(DbContextOptions options) : base(options) {}
-        public ModixDbContext() {}
+
+        public ModixDbContext()
+        {
+            //try
+            //{
+            //    Database.Migrate();
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine(e);
+            //}
+
+        }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);

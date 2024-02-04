@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace MODiX.Config
+namespace MODiX.Data.Models
 {
     public class ConfigJson
     {

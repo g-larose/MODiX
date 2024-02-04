@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Guilded.Base;
 
-namespace MODiX.Services.Models
+namespace MODiX.Data.Models
 {
     public class LocalChannelMessage
     {

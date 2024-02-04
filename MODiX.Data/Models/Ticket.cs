@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MODiX.Data.Models;
 using MODiX.Services.Enums;
 
-namespace MODiX.Services.Models
+namespace MODiX.Data.Models
 {
     public class Ticket
     {

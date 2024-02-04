@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MODiX.Services.Models
+namespace MODiX.Data.Models
 {
     public class TimerModel
     {

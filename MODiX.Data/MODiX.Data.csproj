@@ -25,10 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MODiX.Services\MODiX.Services.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Config\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

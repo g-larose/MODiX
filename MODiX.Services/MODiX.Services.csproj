@@ -30,4 +30,8 @@
     <PackageReference Include="YoutubeExplode.Converter" Version="6.3.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MODiX.Data\MODiX.Data.csproj" />
+  </ItemGroup>
+
 </Project>
