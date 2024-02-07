@@ -12,6 +12,7 @@
     <Folder Include="Features\Dice\" />
     <Folder Include="Features\Blackjack\" />
     <Folder Include="Features\Giveaways\" />
+    <Folder Include="Features\NFLScores\" />
     <Folder Include="Features\SupportTickets\" />
     <Folder Include="Features\Trivia\" />
   </ItemGroup>
@@ -33,6 +34,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MODiX.Data\MODiX.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Features\Welcomer\welcomer_messages.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

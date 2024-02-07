@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 using Guilded.Base;
@@ -10,7 +12,9 @@ using Guilded.Commands;
 using Guilded.Commands.Items;
 using Guilded.Servers;
 using Guilded.Users;
+using MODiX.Data.Factories;
 using MODiX.Services.Features.Music;
+using MODiX.Services.Features.Welcomer;
 using MODiX.Services.Services;
 
 namespace MODiX.Commands.Commands
@@ -19,13 +23,27 @@ namespace MODiX.Commands.Commands
     {
         //member commands
         // uptime, profile (mentioned member profile), help, serverInfo, wikipedia search, meme
+        private readonly ModixDbContextFactory dbFactory = new();
         private MusicPlayerProvider player = new();
         private static string? timePattern = "hh:mm:ss tt";
+
         [Command(Aliases = new string[] { "alive", "uptime", "online" })]
         [Description("returns how long the bot has been online since the last restart")]
         public async Task Uptime(CommandEvent ctx)
         {
             var uptime = BotTimerService.GetBotUptime();
+            var sw = Stopwatch.StartNew();
+            using var db = dbFactory.CreateDbContext();
+            var user = db!.ServerMembers!.First();
+            sw.Stop();
+            var dbLatency = sw.ElapsedMilliseconds;
+            
+            sw.Start();
+            var ping = new Ping();
+            await ping.SendPingAsync("google.com");
+            sw.Stop();
+            var pingTime = sw.ElapsedMilliseconds;
+
             var embed = new Embed()
             {
                 Title = $"{ctx.ParentClient.Name} has been online for {uptime}",
@@ -33,6 +51,8 @@ namespace MODiX.Commands.Commands
                 Footer = new EmbedFooter($"{ctx.ParentClient.Name} watching everything."),
                 Timestamp = DateTime.Now
             };
+            embed.AddField("Db Latency", $"{dbLatency}ms", true);
+            embed.AddField("Ping Reply", $"{pingTime}ms", true);
 
             await ctx.CreateMessageAsync(embed);
         }
@@ -49,17 +69,22 @@ namespace MODiX.Commands.Commands
                 var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                 var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
                 var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, user.Id, 0);
-                // need to write an api service to retrieve the members servers. wip
+
+                using var db = dbFactory.CreateDbContext();
+                var localUser = db!.ServerMembers!.Where(x => x.Nickname.Equals(user.Name));
+                var warnings = localUser.Select(x => x.Warnings).First();
+
                 var embed = new Embed();
                 embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
                 embed.SetThumbnail(user.Avatar!.AbsoluteUri);
                 embed.AddField("Name", $"<@{user.Id}>", false);
-                embed.AddField("Joined", user.JoinedAt, true);
-                embed.AddField("Created", user.CreatedAt, true);
+                embed.AddField("Joined", user.JoinedAt.ToShortDateString(), true);
+                embed.AddField("Created", user.CreatedAt.ToShortDateString(), true);
                 embed.AddField("XP", xp, true);
+                embed.AddField("Warnings", warnings.ToString(), true);
                 embed.AddField("Server", server.Name, true);
 
-                await invokator.CreateMessageAsync(embed);
+                await invokator.ReplyAsync(embed);
 
             }
             catch (Exception e)
@@ -124,7 +149,7 @@ namespace MODiX.Commands.Commands
                 var time = DateTime.Now.ToString(timePattern);
                 var date = DateTime.Now.ToShortDateString();
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine($"[{date}][{time}][ERROR]  [MODiX] [{e.Message}]");
+                Console.WriteLine($"[{date}][{time}][ERROR]  [{invokator.ParentClient.Name}] [{e.Message}]");
                 await invokator.ReplyAsync(
                     $"`[ERROR]` something went wrong while fetching bot info. please try again later.");
                 return;
@@ -152,6 +177,22 @@ namespace MODiX.Commands.Commands
            embed.SetFooter($"{invokator.ParentClient.Name} ");
            embed.SetTimestamp(DateTime.Now);
            await invokator.ReplyAsync(embed);
+        }
+
+        [Command(Aliases = new string[] { "welcome" })]
+        [Description("says a random welcome message")]
+        public async Task Welcome(CommandEvent invokator, string userToWelcome)
+        {
+            var welcomerService = new WelcomerProviderService();
+            var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
+            var serverId = invokator.ServerId;
+            var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
+
+            if (welcomeMsg is not null || welcomeMsg!.Message != "")
+            {
+                var newMsg = welcomeMsg!.Message!.Replace("[member]", userToWelcome).Replace("[server]", server.Name);
+                await invokator.ReplyAsync(newMsg, null, null, true, false);
+            }
         }
 }
 }

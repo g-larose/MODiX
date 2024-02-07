@@ -14,6 +14,7 @@ namespace MODiX.Commands.Commands
     public class ModCommands : CommandModule
     {
         private readonly ModixDbContext dbContext = new ModixDbContext();
+
         [Command(Aliases= new string[] { "warn", "w" })]
         [Description("warns another server member with a reason for the warning.")]
         public async Task Warn(CommandEvent invokator, string user, string[] reason)
@@ -59,7 +60,7 @@ namespace MODiX.Commands.Commands
                     await dbContext.SaveChangesAsync();
 
                     embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
-                    embed.AddField(new EmbedField("Issued To:", $"<@{newUser.Nickname}>", true));
+                    embed.AddField(new EmbedField("Issued To:", $"<@{newUser.Id}>", false));
                     embed.AddField(new EmbedField("Reason:", $"{args}", false));
                     embed.AddField(new EmbedField("Warnings:", $"{newUser.Warnings + 1}", false));
 
@@ -84,9 +85,24 @@ namespace MODiX.Commands.Commands
 
         [Command(Aliases = new string[] { "mute", "m" })]
         [Description("mutes a server member with a reason why they were muted.")]
-        public async Task Mute(CommandEvent invokator, string reason)
+        public async Task Mute(CommandEvent invokator, string user, string[] reason)
         {
-           
+            var authorId = invokator.Message.CreatedBy;
+            var serverId = invokator.ServerId;
+            var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+            var authPermissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, authorId);
+
+            if (!authPermissions.Contains(Permission.ManageChannels))
+            {
+                var mutedUser = invokator!.Mentions!.Users!.First();
+                if (mutedUser.Id.Equals(""))
+                {
+                    await invokator.ReplyAsync("no mentioned user to mute, command ignored!");
+                }
+                else
+                {
+                }
+            }
         }
 
         [Command(Aliases = new string[] { "kick", "k" })]
