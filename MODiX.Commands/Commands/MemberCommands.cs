@@ -183,7 +183,7 @@ namespace MODiX.Commands.Commands
         [Description("says a random welcome message")]
         public async Task Welcome(CommandEvent invokator, string userToWelcome)
         {
-            var welcomerService = new WelcomerProviderService();
+            using var welcomerService = new WelcomerProviderService();
             var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
             var serverId = invokator.ServerId;
             var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
@@ -191,7 +191,7 @@ namespace MODiX.Commands.Commands
             if (welcomeMsg is not null || welcomeMsg!.Message != "")
             {
                 var newMsg = welcomeMsg!.Message!.Replace("[member]", userToWelcome).Replace("[server]", server.Name);
-                await invokator.ReplyAsync(newMsg, null, null, true, false);
+                await invokator.ReplyAsync($"{newMsg}", null, null, true, false);
             }
         }
 }

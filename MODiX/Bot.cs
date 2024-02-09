@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using MODiX.Commands.Commands;
 using MODiX.Data;
 using MODiX.Data.Models;
+using MODiX.Services.Features.Welcomer;
 using MODiX.Services.Interfaces;
 using MODiX.Services.Services;
 using Websocket.Client;
@@ -42,6 +43,8 @@ namespace MODiX
             client.MemberJoined
                 .Subscribe(async memJoined =>
                 {
+                    using var welcomerService = new WelcomerProviderService();
+                    var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     var serverId = memJoined.ServerId;
@@ -49,10 +52,12 @@ namespace MODiX
                     var defaultChannelId = (Guid)server.DefaultChannelId!;
                     var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
                     await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36453250);
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
                     Console.WriteLine($"[{date}][{time}][INFO]  [{memJoined.ParentClient.Name}] {memJoined.Name} joined the server.");
+                    var newMsg = welcomeMsg!.Message!.Replace("[member]", memJoined.Name).Replace("[server]", server.Name);
                     var embed = new Embed();
                     embed.SetDescription(
-                        $"Welcome to Rogue Labs <@{memJoined.Id}> read our code of conduct here {channel}");
+                        $"{newMsg} , please read our code of conduct here {channel}");
                     embed.SetFooter("MODiX watching everything ");
                     embed.SetTimestamp(DateTime.Now);
                     await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, true, false, embed);

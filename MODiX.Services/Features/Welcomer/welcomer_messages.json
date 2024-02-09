@@ -23,7 +23,10 @@
     {
       "emoji": 52119,
       "message": "Hey [member] , Welcome to the [server] family!"
-    } 
-    
+    },
+    {
+      "emoji": 52119,
+      "message": "Hello [member] , welcome to [server] Get comfy, get chatting, and get ready for an amazing time!"
+    }     
   ]
 }
