@@ -11,11 +11,6 @@ namespace MODiX.Services.Features.Welcomer
 {
     public class WelcomerProviderService : IWelcomerProvider, IDisposable
     {
-        public void Dispose()
-        {
-            this.Dispose();
-        }
-
         public async Task<WelcomeMessage> GetRandomWelcomeMessageAsync()
         {
             var jFile = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Features", "Welcomer", "welcomer_messages.json"));
@@ -32,6 +27,11 @@ namespace MODiX.Services.Features.Welcomer
 
             return welcomeMessage;
 
+        }
+
+        public void Dispose()
+        {
+            this.Dispose();
         }
     }
 }

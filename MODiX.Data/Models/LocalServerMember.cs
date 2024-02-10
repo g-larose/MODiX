@@ -13,7 +13,7 @@ namespace MODiX.Data.Models
         public string? ServerId { get; set; }
         public int Xp { get; set; }
         public int Warnings { get; set; }
-        public int[] RoleIds { get; set; } = Array.Empty<int>();
+        public List<uint> RoleIds { get; set; } = new();
         public string Nickname { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime JoinedAt { get; set; }

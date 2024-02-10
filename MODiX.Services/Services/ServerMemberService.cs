@@ -3,13 +3,41 @@ using System.Reactive.Threading.Tasks;
 using Guilded;
 using Guilded.Base;
 using Guilded.Servers;
+using MODiX.Data;
+using MODiX.Data.Factories;
 using MODiX.Data.Models;
 using MODiX.Services.Interfaces;
 
 namespace MODiX.Services.Services
 {
-    public class ServerMemberService : IServerMemberService
+    public class ServerMemberService : IServerMemberService, IDisposable
     {
+        private ModixDbContextFactory _dbFactory = new();
+        public async Task<bool> AddServerMemberToDBAsync(Member member)
+        {
+            using var db = _dbFactory.CreateDbContext();
+            var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString());
+
+            if (localMember is not null) return false;
+
+            var newMember = new LocalServerMember
+            {
+                Id = Guid.NewGuid(),
+                Nickname = member.Name,
+                UserId = member.User.Id.ToString(),
+                Xp = 0,
+                ServerId = member.ServerId.ToString(),
+                CreatedAt = member.CreatedAt,
+                JoinedAt = DateTime.Now,
+                RoleIds = member.RoleIds.ToList()
+            };
+
+            await db!.AddAsync(newMember);
+            await db.SaveChangesAsync();
+            return true;
+            
+        }
+
         public Task<bool> AddWarningAsync(HashId memberId)
         {
             throw new NotImplementedException();
@@ -62,6 +90,11 @@ namespace MODiX.Services.Services
         public Task<bool> UnMuteMemberAsync(HashId memberId)
         {
             throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+            this.Dispose();
         }
     }
 }

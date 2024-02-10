@@ -61,6 +61,8 @@ namespace MODiX
                     embed.SetFooter("MODiX watching everything ");
                     embed.SetTimestamp(DateTime.Now);
                     await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, true, false, embed);
+                    using var memService = new ServerMemberService();
+                    var _ = await memService.AddServerMemberToDBAsync(memJoined.Member);
 
                 });
 
