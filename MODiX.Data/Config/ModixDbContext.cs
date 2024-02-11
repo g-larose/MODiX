@@ -10,6 +10,7 @@ namespace MODiX.Data
         public DbSet<LocalServerMember>? ServerMembers { get; set; }
         public DbSet<Suggestion>? Suggestions { get; set; }
         public DbSet<Ticket>? Tickets { get; set; }
+        public DbSet<LocalChannelMessage>? Messages { get; set; }
 
         public ModixDbContext(DbContextOptions options) : base(options) {}
 

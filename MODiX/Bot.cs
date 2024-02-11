@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MODiX.Commands.Commands;
 using MODiX.Data;
+using MODiX.Data.Factories;
 using MODiX.Data.Models;
 using MODiX.Services.Features.Welcomer;
 using MODiX.Services.Interfaces;
@@ -24,6 +25,7 @@ namespace MODiX
         private static string? prefix = JsonSerializer.Deserialize<ConfigJson>(json!).Prefix!;
         private static string? timePattern = "hh:mm:ss tt";
         private IMessageHandler msgHandler { get; set; }
+        private readonly ModixDbContextFactory? _dbFactory = new();
         public async Task RunAsync()
         {
             msgHandler = new MessageHandler();
@@ -92,8 +94,25 @@ namespace MODiX
             client.MessageCreated
                 .Subscribe(async msg =>
                 {
+                   
+                    using var db = _dbFactory!.CreateDbContext();
                     if (msg.Message.CreatedBy == client.Id) return;
                     await msgHandler.HandleMessageAsync(msg.Message);
+                    var index = msg!.Content!.IndexOf(" ");
+                    
+                    if (index == -1) return;
+                    var message = new LocalChannelMessage()
+                    {
+                        Id = Guid.NewGuid(),
+                        ChannelId = msg.ChannelId,
+                        ServerId = msg.ServerId.ToString(),
+                        AuthorId = msg.CreatedBy.ToString(),
+                        MessageContent = msg.Content.Substring(index).Trim(),
+                        CreatedAt = msg.CreatedAt,
+                    };
+
+                    db.Add(message);
+                    db.SaveChanges();
                 });
 
             client.MessageDeleted

@@ -13,6 +13,7 @@ using Guilded.Commands.Items;
 using Guilded.Servers;
 using Guilded.Users;
 using MODiX.Data.Factories;
+using MODiX.Services.Features._8Ball;
 using MODiX.Services.Features.Music;
 using MODiX.Services.Features.Welcomer;
 using MODiX.Services.Services;
@@ -22,7 +23,7 @@ namespace MODiX.Commands.Commands
     public class MemberCommands : CommandModule
     {
         //member commands
-        // uptime, profile (mentioned member profile), help, serverInfo, wikipedia search, meme
+        // uptime, profile (mentioned member profile), help, serverInfo
         private readonly ModixDbContextFactory dbFactory = new();
         private MusicPlayerProvider player = new();
         private static string? timePattern = "hh:mm:ss tt";
@@ -59,32 +60,60 @@ namespace MODiX.Commands.Commands
 
         [Command(Aliases = new string[] { "profile" })]
         [Description("gets the triggering users member info")]
-        public async Task Profile(CommandEvent invokator, string mentions)
+        public async Task Profile(CommandEvent invokator, string mentions = "")
         {
             try
             {
-                var authorId = invokator.Message.CreatedBy;
-                var serverId = invokator.ServerId;
-                var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, invokator.Mentions!.Users!.First().Id);
-                var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
-                var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
-                var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, user.Id, 0);
+                if (mentions is null || mentions.Equals(""))
+                {
+                    var authorId = invokator.Message.CreatedBy;
+                    var serverId = invokator.ServerId;
+                    var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+                    var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
+                    var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, author.Id, 0);
 
-                using var db = dbFactory.CreateDbContext();
-                var localUser = db!.ServerMembers!.Where(x => x.Nickname.Equals(user.Name));
-                var warnings = localUser.Select(x => x.Warnings).First();
+                    using var db = dbFactory.CreateDbContext();
+                    var localUser = db!.ServerMembers!.Where(x => x.Nickname.Equals(author.Name));
+                    var warnings = localUser.Select(x => x.Warnings).First();
 
-                var embed = new Embed();
-                embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
-                embed.SetThumbnail(user.Avatar!.AbsoluteUri);
-                embed.AddField("Name", $"<@{user.Id}>", false);
-                embed.AddField("Joined", user.JoinedAt.ToShortDateString(), true);
-                embed.AddField("Created", user.CreatedAt.ToShortDateString(), true);
-                embed.AddField("XP", xp, true);
-                embed.AddField("Warnings", warnings.ToString(), true);
-                embed.AddField("Server", server.Name, true);
+                    var embed = new Embed();
+                    embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
+                    embed.SetThumbnail(author.Avatar!.AbsoluteUri);
+                    embed.AddField("Name", $"<@{author.Id}>", false);
+                    embed.AddField("Joined", author.JoinedAt.ToShortDateString(), true);
+                    embed.AddField("Created", author.CreatedAt.ToShortDateString(), true);
+                    embed.AddField("XP", xp, true);
+                    embed.AddField("Warnings", warnings.ToString(), true);
+                    embed.AddField("Server", server.Name, true);
 
-                await invokator.ReplyAsync(embed);
+                    await invokator.ReplyAsync(embed);
+                }
+                else
+                {
+                    var authorId = invokator.Message.CreatedBy;
+                    var serverId = invokator.ServerId;
+                    var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, invokator.Mentions!.Users!.First().Id);
+                    var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+                    var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
+                    var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, user.Id, 0);
+
+                    using var db = dbFactory.CreateDbContext();
+                    var localUser = db!.ServerMembers!.Where(x => x.Nickname.Equals(user.Name));
+                    var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
+
+                    var embed = new Embed();
+                    embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
+                    embed.SetThumbnail(user.Avatar!.AbsoluteUri);
+                    embed.AddField("Name", $"<@{user.Id}>", false);
+                    embed.AddField("Joined", user.JoinedAt.ToShortDateString(), true);
+                    embed.AddField("Created", user.CreatedAt.ToShortDateString(), true);
+                    embed.AddField("XP", xp, true);
+                    embed.AddField("Warnings", warnings.ToString(), true);
+                    embed.AddField("Server", server.Name, true);
+
+                    await invokator.ReplyAsync(embed);
+                }
+                
 
             }
             catch (Exception e)
@@ -129,15 +158,30 @@ namespace MODiX.Commands.Commands
                 var botUptime = BotTimerService.GetBotUptime();
                 var creatorName = "Async<RogueLabs>";
 
+                var uptime = BotTimerService.GetBotUptime();
+                var sw = Stopwatch.StartNew();
+                using var db = dbFactory.CreateDbContext();
+                var user = db!.ServerMembers!.First();
+                sw.Stop();
+                var dbLatency = sw.ElapsedMilliseconds;
+
+                sw.Start();
+                var ping = new Ping();
+                await ping.SendPingAsync("google.com");
+                sw.Stop();
+                var pingTime = sw.ElapsedMilliseconds;
+
                 var embed = new Embed();
                 embed.SetTitle($"{botName} Info");
+                embed.AddField("Creator", $"<@mq1ezklm>", false);
                 embed.AddField("Server Id", $"`{serverId}`", true);
                 embed.AddField("Bot Id", $"`{botId}`", true);
                 embed.AddField("Bot Name", $"`{botName}`", true);
                 embed.AddField("Uptime", $"`{botUptime}`", true);
-                embed.AddField("Creator", $"`{creatorName}`", true);
+                embed.AddField("Db Ping", $"`{dbLatency}ms`", true);
+                embed.AddField("Api Ping", $"`{pingTime}ms`", true);
                 embed.SetThumbnail(botAvatar);
-                embed.SetColor(EmbedColorService.GetColor("blurple", Color.MediumPurple));
+                embed.SetColor(EmbedColorService.GetColor("grey", Color.DarkGray));
                 embed.SetFooter($"{botName} watching everything ");
                 embed.SetTimestamp(DateTime.Now);
 
@@ -193,6 +237,59 @@ namespace MODiX.Commands.Commands
                 var newMsg = welcomeMsg!.Message!.Replace("[member]", userToWelcome).Replace("[server]", server.Name);
                 await invokator.ReplyAsync($"{newMsg}", null, null, true, false);
             }
+        }
+
+        [Command(Aliases = new[] { "serverinfo" })]
+        [Description("get the server info")]
+        public async Task ServerInfo(CommandEvent invokator)
+        {
+            using var serverService = new ServerMemberService();
+            var serverId = invokator.ServerId;
+            var client = invokator.ParentClient;
+            var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
+            var ownerId = server.OwnerId;
+            var owner = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, ownerId);
+            var members = await serverService.GetServerMembersAsync(client, (HashId)serverId!);
+
+            var embed = new Embed();
+            embed.SetTitle($"{server.Name} Info");
+            embed.AddField("Server Name", server.Name, true);
+            embed.AddField("Created", server.CreatedAt, true);
+            embed.AddField("Owner", owner.Name, true);
+            embed.AddField("Member Count", members.Count, true);
+            embed.SetFooter($"{invokator.ParentClient.Name} watching everything ");
+            embed.SetTimestamp(DateTime.Now);
+
+            await invokator.ReplyAsync(embed);
+            ServerMemberService.Dispose();
+        }
+
+        [Command(Aliases = new[] { "8ball" })]
+        [Description("ask 8ball a question, get a response message")]
+        public async Task EightBall(CommandEvent invokator, string[] query)
+        {
+            if (query is not null || query!.Length > 0)
+            {
+                using var eightBall = new _8BallProviderService();
+                var question = string.Join(" ", query);
+                var authorId = invokator.Message.CreatedBy;
+                var serverId = invokator.Message.ServerId;
+                var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+                var response = eightBall.GetEightBallResponse();
+
+                var embed = new Embed();
+                embed.SetDescription($"{response}");
+                embed.SetColor(EmbedColorService.GetColor("gray", Color.DarkGray));
+                //embed.SetFooter($"{invokator.ParentClient.Name} ");
+                //embed.SetTimestamp(DateTime.Now);
+
+                await invokator.ReplyAsync(embed);
+            }
+            else
+            {
+                await invokator.ReplyAsync($"I'm sorry but I don't understand the question, please try again later.");
+            }
+            
         }
 }
 }

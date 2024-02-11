@@ -37,6 +37,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Features\8Ball\eightball_response.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Features\Welcomer\welcomer_messages.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

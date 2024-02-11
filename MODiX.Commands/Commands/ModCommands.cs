@@ -54,7 +54,7 @@ namespace MODiX.Commands.Commands
                     newUser.Warnings += 1;
                     newUser.Messages = null;
                     newUser.Xp = int.Parse(userXp.ToString());
-                    newUser.RoleIds = Array.Empty<int>();
+                    newUser.RoleIds = new List<uint>();
 
                     await dbContext.AddAsync(newUser);
                     await dbContext.SaveChangesAsync();
@@ -163,7 +163,9 @@ namespace MODiX.Commands.Commands
 
                 var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
                 var date = DateTime.Now.ToShortDateString();
-                Console.WriteLine($"[{date}] [{time}] [INFO] [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
                 var embed = new Embed()
                 {
                     Description = $"{amount} messages deleted",
