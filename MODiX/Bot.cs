@@ -32,7 +32,8 @@ namespace MODiX
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             await using var client = new GuildedBotClient(token!)
                 .AddCommands(new ModCommands(), prefix!)
-                .AddCommands(new MemberCommands(), prefix!);
+                .AddCommands(new MemberCommands(), prefix!)
+                .AddCommands(new ConfigCommands(), prefix!);
 
             client.Prepared
                 .Subscribe(async me =>

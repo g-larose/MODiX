@@ -14,7 +14,9 @@ namespace MODiX.Commands.Commands
     public class ModCommands : CommandModule
     {
         private readonly ModixDbContext dbContext = new ModixDbContext();
+        private static string? timePattern = "hh:mm:ss tt";
 
+        #region WARN
         [Command(Aliases= new string[] { "warn", "w" })]
         [Description("warns another server member with a reason for the warning.")]
         public async Task Warn(CommandEvent invokator, string user, string[] reason)
@@ -82,7 +84,9 @@ namespace MODiX.Commands.Commands
             }
             
         }
+        #endregion
 
+        #region MUTE
         [Command(Aliases = new string[] { "mute", "m" })]
         [Description("mutes a server member with a reason why they were muted.")]
         public async Task Mute(CommandEvent invokator, string user, string[] reason)
@@ -104,42 +108,81 @@ namespace MODiX.Commands.Commands
                 }
             }
         }
+        #endregion
 
+        #region KICK
         [Command(Aliases = new string[] { "kick", "k" })]
         [Description("kicks another server member from the server with a reason for the kick.")]
-        public async Task Kick(CommandEvent invokator, string reason)
+        public async Task Kick(CommandEvent invokator, string? memToKick = "", string[]? reason = null)
         {
-
+            var memId = invokator.Message.CreatedBy;
+            var serverId = invokator.ServerId;
+            var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
+            var member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memId);
+            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, memId);
+            
+            if (!permissions.Contains(Permission.RemoveMembers))
+            {
+                await invokator.ReplyAsync($"{member.Name} you do not have the permissions to kick members, command ignored!");
+            }
+            else
+            {
+                if (memToKick!.Equals("") || memToKick is null)
+                {
+                     await invokator.ReplyAsync($"{member.Name} no member name given, command ignored!");
+                }
+                else
+                {
+                    member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, invokator!.Mentions!.Users!.FirstOrDefault()!.Id!);
+                    //await member.RemoveAsync(); 
+                    //TODO: uncomment the RemoveAsync method above.
+                    var time = DateTime.Now.ToString(timePattern);
+                    var date = DateTime.Now.ToShortDateString();
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{invokator.ParentClient.Name}] {member.User.Name} has been removed from {server.Name}.");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    var _reason = string.Join(" ", reason!);
+                    var embed = new Embed()
+                    {
+                        Description = $"{member.Name} has been removed from {server.Name}\r\n reason : **{_reason}** ", 
+                        Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything "),
+                        Timestamp = DateTime.Now
+                    };
+                    await invokator.ReplyAsync(embed);
+                }
+                
+            }
         }
+        #endregion
 
+        #region BAN
         [Command(Aliases = new string[] { "ban", "b" })]
         [Description("ban another server member from the server with a reason for the ban.")]
         public async Task Ban(CommandEvent invokator, string reason)
         {
 
         }
+        #endregion
 
+        #region PROMOTE
         [Command(Aliases = new string[] { "promote", "pm" })]
         [Description("promotes another server member")]
         public async Task Promote(CommandEvent invokator, string roleId)
         {
 
         }
+        #endregion
 
+        #region DEMOTE
         [Command(Aliases = new string[] { "demote", "dm" })]
         [Description("demotes another server member")]
         public async Task Demote(CommandEvent invokator, string roleId)
         {
 
         }
+        #endregion
 
-        [Command(Aliases = new string[] { "updateDC", "udc" })]
-        [Description("update the default channel")]
-        public async Task UpdateDefaultChannel(CommandEvent invokator, string serverId, string channelId)
-        {
-
-        }
-
+        #region PURGE
         [Command(Aliases = new string[] { "purge", "p" })]
         [Description("removes a set amount of channel messages")]
         public async Task Purge(CommandEvent invokator, uint amount)
@@ -181,5 +224,6 @@ namespace MODiX.Commands.Commands
                 await invokator.ReplyAsync($"`{author}` you do not have the permission to manage messages, command ignored!");
             }
         }
+        #endregion
     }
 }
