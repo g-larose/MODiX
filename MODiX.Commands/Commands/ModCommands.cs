@@ -133,18 +133,18 @@ namespace MODiX.Commands.Commands
                 }
                 else
                 {
-                    member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, invokator!.Mentions!.Users!.FirstOrDefault()!.Id!);
-                    //await member.RemoveAsync(); 
+                    var kicked_member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, invokator!.Mentions!.Users!.FirstOrDefault()!.Id!);
+                    //await kicked_member.RemoveAsync(); 
                     //TODO: uncomment the RemoveAsync method above.
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkRed;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [{invokator.ParentClient.Name}] {member.User.Name} has been removed from {server.Name}.");
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{invokator.ParentClient.Name}] {kicked_member.User.Name} has been removed from {server.Name}.");
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     var _reason = string.Join(" ", reason!);
                     var embed = new Embed()
                     {
-                        Description = $"{member.Name} has been removed from {server.Name}\r\n reason : **{_reason}** ", 
+                        Description = $"{kicked_member.Name} has been removed from {server.Name}\r\n reason : **{_reason}** ", 
                         Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything "),
                         Timestamp = DateTime.Now
                     };

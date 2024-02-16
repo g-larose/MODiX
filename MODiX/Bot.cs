@@ -20,11 +20,11 @@ namespace MODiX
 {
     public class Bot
     {
-        private static string? json   = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "config.json"));
-        private static string? token  = JsonSerializer.Deserialize<ConfigJson>(json!)!.Token!;
-        private static string? prefix = JsonSerializer.Deserialize<ConfigJson>(json!).Prefix!;
-        private static string? timePattern = "hh:mm:ss tt";
-        private IMessageHandler msgHandler { get; set; }
+        private static readonly string? json   = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "config.json"));
+        private static readonly string? token  = JsonSerializer.Deserialize<ConfigJson>(json!)!.Token!;
+        private static readonly string? prefix = JsonSerializer.Deserialize<ConfigJson>(json!)!.Prefix!;
+        private static readonly string? timePattern = "hh:mm:ss tt";
+        private IMessageHandler? msgHandler { get; set; }
         private readonly ModixDbContextFactory? _dbFactory = new();
         public async Task RunAsync()
         {
@@ -33,7 +33,8 @@ namespace MODiX
             await using var client = new GuildedBotClient(token!)
                 .AddCommands(new ModCommands(), prefix!)
                 .AddCommands(new MemberCommands(), prefix!)
-                .AddCommands(new ConfigCommands(), prefix!);
+                .AddCommands(new ConfigCommands(), prefix!)
+                .AddCommands(new WikiCommands(), prefix!);
 
             client.Prepared
                 .Subscribe(async me =>

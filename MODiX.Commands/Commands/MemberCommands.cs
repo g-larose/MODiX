@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
+using AngleSharp.Text;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
@@ -25,6 +26,7 @@ namespace MODiX.Commands.Commands
         //member commands
         // uptime, profile (mentioned member profile), help, serverInfo
         private readonly ModixDbContextFactory dbFactory = new();
+        private readonly ServerMemberService memService = new();
         private MusicPlayerProvider player = new();
         private static string? timePattern = "hh:mm:ss tt";
 
@@ -71,7 +73,7 @@ namespace MODiX.Commands.Commands
                     var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                     var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
                     var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, author.Id, 0);
-
+                    var servers = await memService.GetMemberServersAsync(serverId.ToString()!);
                     using var db = dbFactory.CreateDbContext();
                     var localUser = db!.ServerMembers!.Where(x => x.Nickname.Equals(author.Name));
                     var warnings = localUser.Select(x => x.Warnings).First();
@@ -132,7 +134,23 @@ namespace MODiX.Commands.Commands
                 var authorId = invokator.Message.CreatedBy;
                 var serverId = invokator.ServerId;
                 var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+                var bot = invokator.ParentClient.Name;
                 var embed = new Embed();
+                embed.SetDescription($"**Member Commands**\r\n1. Uptime : get the online time for {invokator.ParentClient.Name}\r\n" +
+                    $"2. Profile : get the profile for a server member\r\n" +
+                    $"3. Welcome : welcome a new member to the server\r\n" +
+                    $"4. BotInfo : get {bot}'s information\r\n" +
+                    $"5. ServerInfo : get the server's information\r\n" +
+                    $"6. 8Ball : ask 8ball a question, get a response.\r\n\r\n" +
+                    $"**Mod Commands**\r\n1. Purge : remove a set amount of messages from a channel\r\n" +
+                    $"2. Mute : mute a member for a set amount of time\r\n" +
+                    $"3. Warn : warn a member, this adds a warning to the member in the database" +
+                    $"4. Kick : remove a member from the server\r\n" +
+                    $"5. Ban : ban a member from the server");
+                embed.SetFooter(new EmbedFooter($"{bot} watching everything\r\n"));
+                embed.SetTimestamp(DateTime.Now);
+
+                await invokator.ReplyAsync(embed);
 
             }
             catch (Exception e)

@@ -1,6 +1,7 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using Guilded;
 using Guilded.Base;
 using Guilded.Client;
@@ -104,5 +105,21 @@ namespace MODiX.Services.Services
             throw new NotImplementedException();
         }
 
+        public async Task<Server[]> GetMemberServersAsync(string userId)
+        {
+            using var httpClient = new HttpClient();
+           // var endpoint = new Uri($"https://www.guilded.gg/api/v1/users/{userId}/servers");
+            var serverEndpoint = new Uri($"https://www.guilded.gg/api/v1/servers/{userId}/members");
+            var jsonFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config", "config.json");
+            var json = await File.ReadAllTextAsync(jsonFile);
+            var token = JsonSerializer.Deserialize<ConfigJson>(json!)!.Token!;
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            
+            var response = await httpClient.GetStringAsync(serverEndpoint);
+            
+            return null; ;
+
+        }
     }
 }
