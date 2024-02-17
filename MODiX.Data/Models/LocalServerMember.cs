@@ -11,13 +11,14 @@ namespace MODiX.Data.Models
         public Guid Id { get; set; } = Guid.NewGuid();
         public string? UserId { get; set; }
         public string? ServerId { get; set; }
-        public int Xp { get; set; }
+        public long Xp { get; set; }
         public int Warnings { get; set; }
         public List<uint> RoleIds { get; set; } = new();
-        public string Nickname { get; set; } = string.Empty;
+        public string? Nickname { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime JoinedAt { get; set; }
         public List<LocalChannelMessage>? Messages { get; set; }
+        public Wallet? Wallet { get; set; }
 
     }
 }

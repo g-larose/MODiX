@@ -35,7 +35,13 @@ namespace MODiX.Services.Services
                 ServerId = member.ServerId.ToString(),
                 CreatedAt = member.CreatedAt,
                 JoinedAt = DateTime.Now,
-                RoleIds = member.RoleIds.ToList()
+                RoleIds = member.RoleIds.ToList(),
+                Wallet = new Wallet()
+                {
+                    Id = Guid.NewGuid(),
+                    MemberId = member.Id.ToString(),
+                    Points = 0
+                },
             };
 
             await db!.AddAsync(newMember);

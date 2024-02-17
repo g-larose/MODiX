@@ -10,7 +10,6 @@
     <Folder Include="Enums\" />
     <Folder Include="Features\Economy\" />
     <Folder Include="Features\Dice\" />
-    <Folder Include="Features\Blackjack\" />
     <Folder Include="Features\Giveaways\" />
     <Folder Include="Features\NFLScores\" />
     <Folder Include="Features\SupportTickets\" />

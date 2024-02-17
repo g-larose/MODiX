@@ -3,6 +3,7 @@ using System;
 using MODiX.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    partial class ModixDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240217011612_Add_Model_Wallet")]
+    partial class Add_Model_Wallet
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,6 +69,7 @@ namespace MODiX.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Nickname")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long[]>("RoleIds")
@@ -84,8 +88,8 @@ namespace MODiX.Data.Migrations
                     b.Property<int>("Warnings")
                         .HasColumnType("integer");
 
-                    b.Property<long>("Xp")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Xp")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

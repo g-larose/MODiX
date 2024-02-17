@@ -13,7 +13,9 @@ using Guilded.Commands;
 using Guilded.Commands.Items;
 using Guilded.Servers;
 using Guilded.Users;
+using Microsoft.EntityFrameworkCore;
 using MODiX.Data.Factories;
+using MODiX.Data.Models;
 using MODiX.Services.Features._8Ball;
 using MODiX.Services.Features.Music;
 using MODiX.Services.Features.Welcomer;
@@ -73,11 +75,11 @@ namespace MODiX.Commands.Commands
                     var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                     var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
                     var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, author.Id, 0);
-                    var servers = await memService.GetMemberServersAsync(serverId.ToString()!);
+                   // var servers = await memService.GetMemberServersAsync(serverId.ToString()!);
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.Nickname.Equals(author.Name));
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
                     var warnings = localUser.Select(x => x.Warnings).First();
-
+                    var points = localUser?.First()!.Wallet!.Points;
                     var embed = new Embed();
                     embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
                     embed.SetThumbnail(author.Avatar!.AbsoluteUri);
@@ -85,6 +87,7 @@ namespace MODiX.Commands.Commands
                     embed.AddField("Joined", author.JoinedAt.ToShortDateString(), true);
                     embed.AddField("Created", author.CreatedAt.ToShortDateString(), true);
                     embed.AddField("XP", xp, true);
+                    embed.AddField("Wallet", points, true);
                     embed.AddField("Warnings", warnings.ToString(), true);
                     embed.AddField("Server", server.Name, true);
 
@@ -100,9 +103,9 @@ namespace MODiX.Commands.Commands
                     var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, user.Id, 0);
 
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.Nickname.Equals(user.Name));
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(user.Id.ToString())).Include(x => x.Wallet);
                     var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
-
+                    var points = localUser?.First()!.Wallet!.Points;
                     var embed = new Embed();
                     embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
                     embed.SetThumbnail(user.Avatar!.AbsoluteUri);
@@ -110,6 +113,7 @@ namespace MODiX.Commands.Commands
                     embed.AddField("Joined", user.JoinedAt.ToShortDateString(), true);
                     embed.AddField("Created", user.CreatedAt.ToShortDateString(), true);
                     embed.AddField("XP", xp, true);
+                    embed.AddField("Wallet", points, true);
                     embed.AddField("Warnings", warnings.ToString(), true);
                     embed.AddField("Server", server.Name, true);
 
@@ -308,6 +312,65 @@ namespace MODiX.Commands.Commands
                 await invokator.ReplyAsync($"I'm sorry but I don't understand the question, please try again later.");
             }
             
+        }
+
+        [Command(Aliases = new string[] { "ping" })]
+        [Description("get a ping , pong response with how long it took in ms")]
+        public async Task Ping(CommandEvent invokator)
+        {
+            var timer = new Stopwatch();
+            timer.Start();
+            var reply = await invokator.CreateMessageAsync("Pong...");
+            timer.Stop();
+            await reply.UpdateAsync($"Pong....took {timer.ElapsedMilliseconds}ms");
+        }
+
+        [Command(Aliases = new string[] { "addmember", "addmem" })]
+        [Description("add a member to the Database")]
+        public async Task AddMember(CommandEvent invokator, string mentionedMember = "")
+        {
+            if (mentionedMember is null)
+            {
+                await invokator.ReplyAsync("no member to add, command ignored!");
+            }
+            else
+            {
+                var memberId = invokator!.Mentions!.Users!.First().Id;
+                var serverId = invokator!.ServerId!;
+                var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
+                var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId!, memberId, 0);
+                var db = dbFactory.CreateDbContext();
+                var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString());
+
+                if(newMem.Count() == 0)
+                {
+                    var member = new LocalServerMember()
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id.ToString(),
+                        CreatedAt = user.CreatedAt,
+                        JoinedAt = user.JoinedAt,
+                        Messages = new List<LocalChannelMessage>(),
+                        Nickname = user.Nickname,
+                        Xp = xp,
+                        RoleIds = new List<uint>(),
+                        ServerId = user.ServerId.ToString(),
+                        Wallet = new Wallet()
+                        {
+                            Id = Guid.NewGuid(),
+                            MemberId = user.Id.ToString(),
+                            Points = 0
+                        },
+                    };
+
+                    await db.ServerMembers!.AddAsync(member);
+                    await db.SaveChangesAsync();
+                    await invokator.ReplyAsync($"member {member.Nickname} has been added to the db with [{member.Wallet.Points}] points added to their wallet");
+                }
+                else
+                    await invokator.ReplyAsync($"member already exists in the db, command ignored!");
+               
+            }
         }
 }
 }
