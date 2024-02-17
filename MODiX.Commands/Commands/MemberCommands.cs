@@ -329,48 +329,49 @@ namespace MODiX.Commands.Commands
         [Description("add a member to the Database")]
         public async Task AddMember(CommandEvent invokator, string mentionedMember = "")
         {
-            if (mentionedMember is null)
+            var memberId = invokator!.Mentions!.Users!.First().Id;
+            var serverId = invokator!.ServerId!;
+            var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
+            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, memberId);
+            var timer = new Stopwatch();
+            timer.Start();
+            if (!permissions.Contains(Guilded.Permissions.Permission.ManageServer))
             {
-                await invokator.ReplyAsync("no member to add, command ignored!");
+                timer.Stop();
+
+                await invokator.ReplyAsync($"{user.Name} you do not have the appropiate permission to manage members, command ignored! took... **{timer.ElapsedMilliseconds}**ms to fire");
+                
+                return;
             }
             else
             {
-                var memberId = invokator!.Mentions!.Users!.First().Id;
-                var serverId = invokator!.ServerId!;
-                var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
-                var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId!, memberId, 0);
-                var db = dbFactory.CreateDbContext();
-                var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString());
-
-                if(newMem.Count() == 0)
+                if (mentionedMember == "")
                 {
-                    var member = new LocalServerMember()
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = user.Id.ToString(),
-                        CreatedAt = user.CreatedAt,
-                        JoinedAt = user.JoinedAt,
-                        Messages = new List<LocalChannelMessage>(),
-                        Nickname = user.Nickname,
-                        Xp = xp,
-                        RoleIds = new List<uint>(),
-                        ServerId = user.ServerId.ToString(),
-                        Wallet = new Wallet()
-                        {
-                            Id = Guid.NewGuid(),
-                            MemberId = user.Id.ToString(),
-                            Points = 0
-                        },
-                    };
-
-                    await db.ServerMembers!.AddAsync(member);
-                    await db.SaveChangesAsync();
-                    await invokator.ReplyAsync($"member {member.Nickname} has been added to the db with [{member.Wallet.Points}] points added to their wallet");
+                    timer.Stop();
+                    await invokator.ReplyAsync($"no member to add, command ignored! took... **{timer.ElapsedMilliseconds}**ms to fire");
                 }
                 else
-                    await invokator.ReplyAsync($"member already exists in the db, command ignored!");
-               
+                {
+
+
+                    var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
+                    if (result)
+                    {
+                        var db = dbFactory.CreateDbContext();
+                        var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString()).Include(x => x.Wallet).ToList();
+                        timer.Stop();
+                        await invokator.ReplyAsync($"member {user.Name} has been added to the db with [{newMem.First()!.Wallet!.Points}] points added to their wallet command took... **{timer.ElapsedMilliseconds}**ms to fire");
+                    }
+                    else
+                    {
+                        timer.Stop();
+                        await invokator.ReplyAsync($"member already exists in the db, command ignored! command took... **{timer.ElapsedMilliseconds}**ms to fire");
+                    }
+                        
+
+                }
             }
+            
         }
 }
 }

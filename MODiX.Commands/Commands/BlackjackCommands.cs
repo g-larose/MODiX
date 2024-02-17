@@ -26,7 +26,7 @@ namespace MODiX.Commands.Commands
             .AddField(new EmbedField("Bot Card", botCard!, true));
 
             embed.Color = EmbedColorService.GetColor("darkgray", Color.DarkGray);
-            embed.Description = "react to hit or stand";
+            embed.Description = "react to hit or stand\r\n**Blackjack** is a WIP\r\nnew **Features** are being developed all the time!";
             var message = await invokator.ReplyAsync(embed);
             var reactions = new uint[] { 90001164, 90002171 };
 
@@ -36,6 +36,7 @@ namespace MODiX.Commands.Commands
             }
                       
             var reaction = message.ReactionAdded;
+
 
         }
     }

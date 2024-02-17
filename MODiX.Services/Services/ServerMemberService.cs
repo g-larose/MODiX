@@ -5,6 +5,7 @@ using System.Text.Json;
 using Guilded;
 using Guilded.Base;
 using Guilded.Client;
+using Guilded.Commands;
 using Guilded.Servers;
 using Microsoft.Win32.SafeHandles;
 using MODiX.Data;
@@ -19,23 +20,28 @@ namespace MODiX.Services.Services
     {
         private ModixDbContextFactory _dbFactory = new();
         
-        public async Task<bool> AddServerMemberToDBAsync(Member member)
+        public async Task<bool> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member)
         {
+            var serverId = member.ServerId;
+            var memberId = member.Id;
+            var user = await ctx.GetMemberAsync((HashId)serverId!, memberId);
+            var xp = await ctx.AddXpAsync((HashId)serverId!, memberId, 0);
+            var roles = await ctx.GetMemberRolesAsync((HashId)serverId!, memberId);
             using var db = _dbFactory.CreateDbContext();
-            var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString());
+            var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString() && x.ServerId!.Equals(member.ServerId.ToString()));
 
-            if (localMember is not null) return false;
+            if (localMember.Count() > 0) return false;
 
             var newMember = new LocalServerMember
             {
                 Id = Guid.NewGuid(),
                 Nickname = member.Name,
                 UserId = member.User.Id.ToString(),
-                Xp = 0,
+                Xp = xp,
                 ServerId = member.ServerId.ToString(),
                 CreatedAt = member.CreatedAt,
-                JoinedAt = DateTime.Now,
-                RoleIds = member.RoleIds.ToList(),
+                JoinedAt = user.JoinedAt,
+                RoleIds = [.. roles],
                 Wallet = new Wallet()
                 {
                     Id = Guid.NewGuid(),
