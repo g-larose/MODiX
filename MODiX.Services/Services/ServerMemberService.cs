@@ -69,13 +69,13 @@ namespace MODiX.Services.Services
         public static new void Dispose()
         {
             DisposableBase disposableBase = new();
-            Console.WriteLine("Disposed!");
             disposableBase.Dispose();
         }
 
-        public Task<string[]> GetMembersPermissions()
+        public Task<string[]> GetMembersPermissions(Member member)
         {
-            throw new NotImplementedException();
+            return null;
+              
         }
 
         public Task<LocalServerMember> GetServerMemberAsync(HashId memberId)

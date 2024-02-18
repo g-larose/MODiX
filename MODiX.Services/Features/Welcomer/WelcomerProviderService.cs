@@ -1,4 +1,5 @@
 ﻿using MODiX.Data.Models;
+using MODiX.Services.BaseModules;
 using MODiX.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,12 @@ namespace MODiX.Services.Features.Welcomer
 {
     public class WelcomerProviderService : IWelcomerProvider, IDisposable
     {
+        public void Dispose()
+        {
+            DisposableBase disposableBase = new();
+            disposableBase.Dispose();
+        }
+
         public async Task<WelcomeMessage> GetRandomWelcomeMessageAsync()
         {
             var jFile = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Features", "Welcomer", "welcomer_messages.json"));
@@ -29,9 +36,5 @@ namespace MODiX.Services.Features.Welcomer
 
         }
 
-        public void Dispose()
-        {
-            this.Dispose();
-        }
     }
 }

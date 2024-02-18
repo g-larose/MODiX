@@ -11,7 +11,7 @@ namespace MODiX.Services.Interfaces
     {
         Task<IList<MemberSummary>> GetServerMembersAsync(AbstractGuildedClient client, HashId serverId);
         Task<LocalServerMember> GetServerMemberAsync(HashId memberId);
-        Task<string[]> GetMembersPermissions();
+        Task<string[]> GetMembersPermissions(Member member);
         Task<Server[]> GetMemberServersAsync(string userId);
         Task<bool> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member);
         Task<bool> AddWarningAsync(HashId memberId);

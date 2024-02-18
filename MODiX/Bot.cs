@@ -1,10 +1,12 @@
-﻿using System.Reactive.Linq;
+﻿using System.Net.WebSockets;
+using System.Reactive.Linq;
 using System.Text.Json;
 using Guilded;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
 using Guilded.Events;
+using Guilded.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MODiX.Commands.Commands;
@@ -92,6 +94,8 @@ namespace MODiX
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] reconnected to gateway...");
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] listening for events...");
                 });
 
             client.MessageCreated
@@ -124,18 +128,31 @@ namespace MODiX
                     if (msg.CreatedBy.Equals(client.Id)) return;
                     var authorId = msg.CreatedBy;
                     var serverID = msg.ServerId;
-                    //var author = await msg.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+                    var author = await msg.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+                    var server = await msg.ParentClient.GetServerAsync((HashId)serverID!);
                     //TODO: handle deleted messages.
-                    
+                    var time = DateTime.Now.ToString(timePattern);
+                    var date = DateTime.Now.ToShortDateString();
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{author.Name}] deleted msg [{msg.Content}] from [{server.Name}]");
+
                 });
 
             client.MemberRemoved
                 .Subscribe(async memRemoved =>
                 {
-
+                    var time = DateTime.Now.ToString(timePattern);
+                    var date = DateTime.Now.ToShortDateString();
+                    var serverId = memRemoved.ServerId;
+                    var memId = memRemoved.Id;
+                    var member = await memRemoved.ParentClient.GetMemberAsync((HashId)serverId!, memId);
+                    var server = await memRemoved.ParentClient.GetServerAsync(serverId);
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{member.Name}] has left [{server.Name}]");
                 });
 
            
+                 
 
             await client.ConnectAsync();
             await client.SetStatusAsync("Watching Everything", 90002579);
@@ -146,7 +163,6 @@ namespace MODiX
             Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] connected...");
             Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] registering command modules...");
             await Task.Delay(200);
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] listening for events...");
             await Task.Delay(-1);
         }

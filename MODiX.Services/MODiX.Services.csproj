@@ -11,6 +11,7 @@
     <Folder Include="Features\Economy\" />
     <Folder Include="Features\Dice\" />
     <Folder Include="Features\Giveaways\" />
+    <Folder Include="Features\Reminder\" />
     <Folder Include="Features\NFLScores\" />
     <Folder Include="Features\SupportTickets\" />
     <Folder Include="Features\Trivia\" />

@@ -34,9 +34,15 @@ namespace MODiX.Commands.Commands
             {
                  await message.AddReactionAsync(r);
             }
-                      
-            var reaction = message.ReactionAdded;
 
+            invokator.ParentClient.MessageReactionAdded
+                     .Where(e => e.CreatedBy == invokator.CreatedBy)
+                     .Subscribe(async reaction =>
+                     {
+
+                         if (reaction.Name == "+1")
+                             await invokator.ReplyAsync($"+1 clicked by {reaction.CreatedBy}");
+                     });
 
         }
     }

@@ -1,25 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Net.NetworkInformation;
-using System.Text;
-using System.Threading.Tasks;
-using AngleSharp.Text;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
 using Guilded.Commands.Items;
-using Guilded.Servers;
-using Guilded.Users;
 using Microsoft.EntityFrameworkCore;
 using MODiX.Data.Factories;
-using MODiX.Data.Models;
 using MODiX.Services.Features._8Ball;
 using MODiX.Services.Features.Music;
 using MODiX.Services.Features.Welcomer;
 using MODiX.Services.Services;
+using Humanizer;
 
 namespace MODiX.Commands.Commands
 {
@@ -53,7 +45,7 @@ namespace MODiX.Commands.Commands
             {
                 Title = $"{ctx.ParentClient.Name} has been online for {uptime}",
                 Color = EmbedColorService.GetColor("teal", Color.Teal),
-                Footer = new EmbedFooter($"{ctx.ParentClient.Name} watching everything."),
+                Footer = new EmbedFooter($"{ctx.ParentClient.Name} watching everything"),
                 Timestamp = DateTime.Now
             };
             embed.AddField("Db Latency", $"{dbLatency}ms", true);
@@ -79,13 +71,13 @@ namespace MODiX.Commands.Commands
                     using var db = dbFactory.CreateDbContext();
                     var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
                     var warnings = localUser.Select(x => x.Warnings).First();
-                    var points = localUser?.First()!.Wallet!.Points;
+                    var points = localUser?.First()!.Wallet!.Points.ToWords();
                     var embed = new Embed();
                     embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
                     embed.SetThumbnail(author.Avatar!.AbsoluteUri);
                     embed.AddField("Name", $"<@{author.Id}>", false);
-                    embed.AddField("Joined", author.JoinedAt.ToShortDateString(), true);
-                    embed.AddField("Created", author.CreatedAt.ToShortDateString(), true);
+                    embed.AddField("Joined", author.JoinedAt.Humanize(), true);
+                    embed.AddField("Created", author.CreatedAt.Humanize(), true);
                     embed.AddField("XP", xp, true);
                     embed.AddField("Wallet", points, true);
                     embed.AddField("Warnings", warnings.ToString(), true);
@@ -105,13 +97,13 @@ namespace MODiX.Commands.Commands
                     using var db = dbFactory.CreateDbContext();
                     var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(user.Id.ToString())).Include(x => x.Wallet);
                     var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
-                    var points = localUser?.First()!.Wallet!.Points;
+                    var points = localUser?.First()!.Wallet!.Points.ToWords();
                     var embed = new Embed();
                     embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
                     embed.SetThumbnail(user.Avatar!.AbsoluteUri);
                     embed.AddField("Name", $"<@{user.Id}>", false);
-                    embed.AddField("Joined", user.JoinedAt.ToShortDateString(), true);
-                    embed.AddField("Created", user.CreatedAt.ToShortDateString(), true);
+                    embed.AddField("Joined", user.JoinedAt.Humanize(), true);
+                    embed.AddField("Created", user.CreatedAt.Humanize(), true);
                     embed.AddField("XP", xp, true);
                     embed.AddField("Wallet", points, true);
                     embed.AddField("Warnings", warnings.ToString(), true);
@@ -140,17 +132,17 @@ namespace MODiX.Commands.Commands
                 var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                 var bot = invokator.ParentClient.Name;
                 var embed = new Embed();
-                embed.SetDescription($"**Member Commands**\r\n1. Uptime : get the online time for {invokator.ParentClient.Name}\r\n" +
-                    $"2. Profile : get the profile for a server member\r\n" +
-                    $"3. Welcome : welcome a new member to the server\r\n" +
-                    $"4. BotInfo : get {bot}'s information\r\n" +
-                    $"5. ServerInfo : get the server's information\r\n" +
-                    $"6. 8Ball : ask 8ball a question, get a response.\r\n\r\n" +
-                    $"**Mod Commands**\r\n1. Purge : remove a set amount of messages from a channel\r\n" +
-                    $"2. Mute : mute a member for a set amount of time\r\n" +
-                    $"3. Warn : warn a member, this adds a warning to the member in the database" +
-                    $"4. Kick : remove a member from the server\r\n" +
-                    $"5. Ban : ban a member from the server");
+                embed.SetDescription($"**Member Commands**\r\n1. Uptime: get the online time for {invokator.ParentClient.Name}\r\n" +
+                    $"2. Profile: get the profile for a server member\r\n" +
+                    $"3. Welcome: welcome a new member to the server\r\n" +
+                    $"4. BotInfo: get {bot}'s information\r\n" +
+                    $"5. ServerInfo: get the server's information\r\n" +
+                    $"6. 8Ball: ask 8ball a question, get a response.\r\n\r\n" +
+                    $"**Mod Commands**\r\n1. Purge: remove a set amount of messages from a channel\r\n" +
+                    $"2. Mute: mute a member for a set amount of time\r\n" +
+                    $"3. Warn: warn a member, this adds a warning to the member in the database\r\n" +
+                    $"4. Kick: remove a member from the server\r\n" +
+                    $"5. Ban: ban a member from the server");
                 embed.SetFooter(new EmbedFooter($"{bot} watching everything\r\n"));
                 embed.SetTimestamp(DateTime.Now);
 
@@ -276,7 +268,7 @@ namespace MODiX.Commands.Commands
             var embed = new Embed();
             embed.SetTitle($"{server.Name} Info");
             embed.AddField("Server Name", server.Name, true);
-            embed.AddField("Created", server.CreatedAt, true);
+            embed.AddField("Created", server.CreatedAt.Humanize(), true);
             embed.AddField("Owner", owner.Name, true);
             embed.AddField("Member Count", members.Count, true);
             embed.SetFooter($"{invokator.ParentClient.Name} watching everything ");
@@ -339,7 +331,7 @@ namespace MODiX.Commands.Commands
             {
                 timer.Stop();
 
-                await invokator.ReplyAsync($"{user.Name} you do not have the appropiate permission to manage members, command ignored! took... **{timer.ElapsedMilliseconds}**ms to fire");
+                await invokator.ReplyAsync($"{user.Name} you do not have the appropiate permission to manage members, command ignored! took... **{timer.ElapsedMilliseconds}**ms to execute");
                 
                 return;
             }
@@ -360,12 +352,12 @@ namespace MODiX.Commands.Commands
                         var db = dbFactory.CreateDbContext();
                         var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString()).Include(x => x.Wallet).ToList();
                         timer.Stop();
-                        await invokator.ReplyAsync($"member {user.Name} has been added to the db with [{newMem.First()!.Wallet!.Points}] points added to their wallet command took... **{timer.ElapsedMilliseconds}**ms to fire");
+                        await invokator.ReplyAsync($"member {user.Name} has been added to the db with [{newMem.First()!.Wallet!.Points}] points added to their wallet, command took... **{timer.ElapsedMilliseconds}**ms to execute");
                     }
                     else
                     {
                         timer.Stop();
-                        await invokator.ReplyAsync($"member already exists in the db, command ignored! command took... **{timer.ElapsedMilliseconds}**ms to fire");
+                        await invokator.ReplyAsync($"member already exists in the db, command ignored! command took... **{timer.ElapsedMilliseconds}**ms to execute");
                     }
                         
 
