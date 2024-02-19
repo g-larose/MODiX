@@ -19,6 +19,7 @@ namespace MODiX.Data.Models
         public DateTime JoinedAt { get; set; }
         public List<LocalChannelMessage>? Messages { get; set; }
         public Wallet? Wallet { get; set; }
+        public Backpack? Backpack { get; set; }
 
     }
 }

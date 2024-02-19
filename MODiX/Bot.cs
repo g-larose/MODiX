@@ -37,7 +37,8 @@ namespace MODiX
                 .AddCommands(new MemberCommands(), prefix!)
                 .AddCommands(new ConfigCommands(), prefix!)
                 .AddCommands(new WikiCommands(), prefix!)
-                .AddCommands(new BlackjackCommands(), prefix!);
+                .AddCommands(new BlackjackCommands(), prefix!)
+                .AddCommands(new EconomyCommands(), prefix!);
 
             client.Prepared
                 .Subscribe(async me =>

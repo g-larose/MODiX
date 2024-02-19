@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,22 +9,24 @@ namespace MODiX.Services.Features.Blackjack
 {
     public class BlackjackSystem
     {
-        private int[] cardNumbers = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-        private string[] faceCards = { "Jack", "Queen", "King" };
-        private string[] cardSuits = { "Clubs", "Spades", "Hearts", "Diamonds" };
+        private readonly int[] cardNumbers = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+        private readonly string[] faceCards = ["Jack", "Queen", "King"];
+        private readonly string[] cardSuits = ["Clubs", "Spades", "Hearts", "Diamonds"];
 
         public int SelectedNumber { get; set; }
-        public string? UserSelectedCard { get; set; }
-        public string? BotSelectedCard { get; set; }
+        public Hand[]? UserSelectedCards { get; set; }
+        public Hand[]? BotSelectedCards { get; set; }
 
         public BlackjackSystem()
         {
 
-            UserSelectedCard = GenerateCard();
-            BotSelectedCard = GenerateCard();
+            UserSelectedCards = [GenerateCard(), GenerateCard(), GenerateCard(), GenerateCard(), GenerateCard()];
+
+            BotSelectedCards  = [GenerateCard(), GenerateCard(), GenerateCard(), GenerateCard(), GenerateCard()];
+
         }
 
-        private string GenerateCard()
+        private Hand GenerateCard()
         {
             var rnd = new Random();
             int numIndex = rnd.Next(0, cardNumbers.Length - 1);
@@ -38,8 +41,11 @@ namespace MODiX.Services.Features.Blackjack
                 11 => "Ace",
                 _ => SelectedNumber.ToString()
             };
+            var card = new Hand();
+            card.Card = $"{faceResult} of {cardSuits[suitIndex]}";
+            card.Value = SelectedNumber;
 
-            return $"{faceResult} of {cardSuits[suitIndex]}";
+            return card;
         }
     }
 }

@@ -18,17 +18,28 @@ namespace MODiX.Commands.Commands
         public async Task Blackjack(CommandEvent invokator)
         {
             var blackJack = new BlackjackSystem();
-            var userCard = blackJack.UserSelectedCard;
-            var botCard = blackJack.BotSelectedCard;
+            var userCard1 = blackJack.UserSelectedCards![0];
+            var botCard1 = blackJack.BotSelectedCards![0];
 
-            var embed = new Embed()
-            .AddField(new EmbedField("User Card", userCard!, true))
-            .AddField(new EmbedField("Bot Card", botCard!, true));
+            var userCard2 = blackJack.UserSelectedCards![1];
+            var botCard2 = blackJack.BotSelectedCards![1];
+
+            var userCard3 = blackJack.UserSelectedCards![2];
+            var botCard3 = blackJack.BotSelectedCards![2];
+
+            var userCard4 = blackJack.UserSelectedCards![3];
+            var botCard4 = blackJack.BotSelectedCards![3];
+
+            var userCard5 = blackJack.UserSelectedCards![4];
+            var botCard5 = blackJack.BotSelectedCards![4];
+
+            var embed = new Embed();
+            embed.SetTitle("User draws");
+            embed.SetDescription($"{userCard1.Card}\nreact with :point_down:  to hit or :white_check_mark: to stand");
 
             embed.Color = EmbedColorService.GetColor("darkgray", Color.DarkGray);
-            embed.Description = "react to hit or stand\r\n**Blackjack** is a WIP\r\nnew **Features** are being developed all the time!";
             var message = await invokator.ReplyAsync(embed);
-            var reactions = new uint[] { 90001164, 90002171 };
+            var reactions = new uint[] { 90001110, 90002171 };
 
             foreach (var r in reactions)
             {
@@ -40,8 +51,17 @@ namespace MODiX.Commands.Commands
                      .Subscribe(async reaction =>
                      {
 
-                         if (reaction.Name == "+1")
-                             await invokator.ReplyAsync($"+1 clicked by {reaction.CreatedBy}");
+                         if (reaction.Name == "point_down")
+                         {
+                             embed.SetDescription($"Player Cards {userCard1.Card} {userCard2.Card} total [{userCard1.Value + userCard2.Value}]");
+                             await message.UpdateAsync(embed);
+                         }
+                         else
+                         {
+                             embed.SetDescription($"Player Cards {userCard1.Card} {userCard2.Card} total [{userCard1.Value + userCard2.Value}]\n" +
+                                 $"Dealer Cards {botCard1.Card} {botCard2.Card} total [{botCard1.Value + botCard2.Value}]");
+                             await message.UpdateAsync(embed);
+                         }
                      });
 
         }
