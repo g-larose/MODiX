@@ -45,7 +45,7 @@ namespace MODiX
                 {
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
-                    Console.WriteLine($"[{date}][{time}][INFO]  [{me.ParentClient.Name}] talking to gateway...");
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{me.ParentClient.Name}] listening for events...");
                 });
 
             client.MemberJoined
@@ -59,7 +59,7 @@ namespace MODiX
                     var server = await memJoined.ParentClient.GetServerAsync((HashId)serverId);
                     var defaultChannelId = (Guid)server.DefaultChannelId!;
                     var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
-                    await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36453250);
+                    //await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36312173);
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
                     Console.WriteLine($"[{date}][{time}][INFO]  [{memJoined.ParentClient.Name}] {memJoined.Name} joined the server.");
                     var newMsg = welcomeMsg!.Message!.Replace("[member]", memJoined.Name).Replace("[server]", server.Name);
@@ -68,7 +68,7 @@ namespace MODiX
                         $"{newMsg} , please read our code of conduct here {channel}");
                     embed.SetFooter("MODiX watching everything ");
                     embed.SetTimestamp(DateTime.Now);
-                    await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, true, false, embed);
+                    await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, false, false, embed);
                     using var memService = new ServerMemberService();
                     var _ = await memService.AddServerMemberToDBAsync(memJoined.ParentClient, memJoined.Member);
 
@@ -77,7 +77,7 @@ namespace MODiX
 
             client.Disconnected
                 .Where(e => e.Type != DisconnectionType.NoMessageReceived)
-                .Subscribe(async me =>
+                .Subscribe(me =>
                 {
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
@@ -146,13 +146,36 @@ namespace MODiX
                     var date = DateTime.Now.ToShortDateString();
                     var serverId = memRemoved.ServerId;
                     var memId = memRemoved.Id;
-                    var member = await memRemoved.ParentClient.GetMemberAsync((HashId)serverId!, memId);
-                    var server = await memRemoved.ParentClient.GetServerAsync(serverId);
+                    //var member = await memRemoved.ParentClient.GetMemberAsync((HashId)serverId!, memId);
+                    //var server = await memRemoved.ParentClient.GetServerAsync(serverId);
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [{member.Name}] has left [{server.Name}]");
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{memRemoved.Id}] has left [{memRemoved.ServerId}]");
                 });
 
-           
+            client.ServerAdded
+                 .Subscribe(async server =>
+                 {
+                     var time = DateTime.Now.ToString(timePattern);
+                     var date = DateTime.Now.ToShortDateString();
+                     var serverId = server.ServerId;
+                     var members = await server.ParentClient.GetMembersAsync((HashId)serverId);
+                     var localServerUser = new LocalServerMember();
+                     Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] has been added to: [{server.Server.Name}]");
+                     if (members.Count > 0)
+                     {
+                         foreach (var mem in members)
+                         {
+
+                         }
+
+                     }
+                     else
+                     {
+                          Console.WriteLine($"[{date}][{time}][INFO]  [MODiX]  no members to add to database");
+                     }
+                    
+                     
+                 });
                  
 
             await client.ConnectAsync();

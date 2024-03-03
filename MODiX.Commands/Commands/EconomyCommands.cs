@@ -4,6 +4,7 @@ using Humanizer;
 using MODiX.Data.Models;
 using MODiX.Services.Features.Economy;
 using MODiX.Services.Interfaces;
+using MODiX.Services.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,14 +16,19 @@ namespace MODiX.Commands.Commands
     public class EconomyCommands : CommandModule
     {
         private Wallet wallet { get; set; } = new();
+        private BotTimerService timer = new();
         [Command(Aliases = [ "daily" ] )]
         [Description("get member's daily economy points")]
         public async Task Daily(CommandEvent invokator)
         {
+            var interval = DateTime.Parse(BotTimerService.GetStartTime()) - DateTime.Now;
+
             using var economy = new EconomyProviderService();
             var points = economy.GetDaily();
             wallet.Points += points;
-            await invokator.ReplyAsync($"you finished daily task and received ⭐{points}⭐ points");
+            await invokator.ReplyAsync($"you finished daily task and received ⭐{points}⭐ points => {interval}");
+
+            
         }
 
         [Command(Aliases = [ "balance" ])]
@@ -50,7 +56,15 @@ namespace MODiX.Commands.Commands
             }
             else
             {
-
+                switch (args)
+                {
+                    case "all":
+                        await invokator.ReplyAsync($"you set args as [**all**]");
+                        break;
+                    default:
+                        await invokator.ReplyAsync("I didn't recognise the command argument, command ignored!");
+                        break;
+                }
             }
         }
     }

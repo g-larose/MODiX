@@ -42,6 +42,7 @@ namespace MODiX.Commands.Commands
                     embed.AddField(new EmbedField("Issued To:", $"<@{warnedUser!.FirstOrDefault()!.Nickname}>", true));
                     embed.AddField(new EmbedField("Reason:", $"{args}", false));
                     embed.AddField(new EmbedField("Warnings:", $"{warnedUser!.FirstOrDefault()!.Warnings + 1}", false));
+                    dbContext.Update(warnedUser);
                     await dbContext.SaveChangesAsync();
                 }
                 else
@@ -135,7 +136,7 @@ namespace MODiX.Commands.Commands
                 {
                     var kicked_member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, invokator!.Mentions!.Users!.FirstOrDefault()!.Id!);
                     //await kicked_member.RemoveAsync(); 
-                    //TODO: uncomment the RemoveAsync method above.
+                    //TODO: uncomment the RemoveAsync method above when done testing command.
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkRed;
@@ -167,9 +168,42 @@ namespace MODiX.Commands.Commands
         #region PROMOTE
         [Command(Aliases = new string[] { "promote", "pm" })]
         [Description("promotes another server member")]
-        public async Task Promote(CommandEvent invokator, string roleId)
+        public async Task Promote(CommandEvent invokator, uint roleId, string mentionedUser = "")
         {
+            var mentionedId = invokator!.Mentions!.Users!.First().Id;
+            var authorId = invokator.Message.CreatedBy;
+            var serverId = invokator.Message.ServerId;
+            var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+            var mentioned = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mentionedId);
+            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, authorId);
 
+            if (!permissions.Contains(Permission.ManageRoles))
+            {
+                await invokator.ReplyAsync($"{author.Name} you do not have the Permissions to Promote a user, command ignored!");
+            }
+            else
+            {
+                if (mentionedUser is null || mentionedUser == "")
+                {
+                    await invokator.ReplyAsync($"{author.Name} please mention a user to Promote.");
+
+                }
+                else
+                {
+                    if (roleId == 0)
+                    {
+                        await invokator.ReplyAsync($"{author.Name} please mention a user to Promote.");
+                    }
+                    else
+                    {
+                        var role = await invokator.ParentClient.GetRoleAsync((HashId)serverId!, roleId);
+                        await invokator.ParentClient.AddMemberRoleAsync((HashId)serverId!, mentionedId, roleId);
+                        await invokator.ReplyAsync($"{role.Name} granted to {mentioned.Name}");
+                    }
+                    
+                }
+            }
+           
         }
         #endregion
 
@@ -196,32 +230,81 @@ namespace MODiX.Commands.Commands
             {
                 var channelId = invokator.ChannelId;
                 var channel = await invokator.ParentClient.GetChannelAsync(channelId);
-                var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount + 1); // here we can specify a before date. Im thinking about it
-                
-                foreach (var m in messages)
+               
+                if (amount <= 100)
                 {
-                    await m.DeleteAsync();
-                    await Task.Delay(100);
-                }
+                    var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount); // here we can specify a before date. Im thinking about it
+                    foreach (var m in messages)
+                    {
+                        await m.DeleteAsync();
+                        await Task.Delay(100);
+                    }
 
-                var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
-                var date = DateTime.Now.ToShortDateString();
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
-                Console.ForegroundColor = ConsoleColor.DarkYellow;
-                var embed = new Embed()
+                    var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+                    var date = DateTime.Now.ToShortDateString();
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    var embed = new Embed()
+                    {
+                        Description = $"{amount} messages deleted",
+                        Color = EmbedColorService.GetColor("orange", Color.Orange),
+                        Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
+                        Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
+                        Timestamp = DateTime.Now
+                    };
+                    var deleteMessage = await invokator.CreateMessageAsync(embed);
+                }
+                else
                 {
-                    Description = $"{amount} messages deleted",
-                    Color = EmbedColorService.GetColor("orange", Color.Orange),
-                    Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
-                    Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
-                    Timestamp = DateTime.Now
-                };
-                var deleteMessage = await invokator.CreateMessageAsync(embed);
+                    var embed = new Embed()
+                    {
+                        Description = $"<@{author.Id}> to many messages, the limit is 100. to set limit run command **purge setlimit amount**",
+                        Color = EmbedColorService.GetColor("orange", Color.Orange),
+                        //Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
+                        Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
+                        Timestamp = DateTime.Now
+                    };
+                    await invokator.ReplyAsync(embed);
+                }
+                   
+                
             }
             else
             {
-                await invokator.ReplyAsync($"`{author}` you do not have the permission to manage messages, command ignored!");
+                await invokator.ReplyAsync($"<@{author.Id}> you do not have the permission to manage messages, command ignored!");
+            }
+        }
+        #endregion
+
+        #region SET
+        [Command(Aliases = new string[] { "set" })]
+        [Description("set [limit, cooldown, timeout] ")]
+        public async Task Set(CommandEvent invokator, string command = "")
+        {
+            var authorId = invokator.Message.CreatedBy;
+            var serverID = invokator.Message.ServerId;
+            var member = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverID!, authorId);
+            var embed = new Embed();
+
+            if (permissions.Contains(Permission.ManageServer))
+            {
+                if (command == null)
+                {
+
+                }
+                else
+                {
+                    switch (command)
+                    {
+
+                    }
+                }
+            }
+            else
+            {
+
             }
         }
         #endregion

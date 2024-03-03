@@ -8,20 +8,22 @@ using System.Text;
 using System.Threading.Tasks;
 using Humanizer.Localisation;
 using MODiX.Data.Models;
+using AngleSharp.Html.Dom;
+using MODiX.Services.Interfaces;
 
 namespace MODiX.Services.Services
 {
-    public class BotTimerService
+    public class BotTimerService : IBotTimer
     {
         private static Stopwatch _timer = new Stopwatch();
         private static string? StartDate { get; set; }
         private static string? StartTime { get; set; }
+        public bool IsRunning { get; set; }
+        public double Interval { get; set; }
 
         public BotTimerService()
         {
-            _timer.Start();
-            StartDate = DateTime.Now.ToShortDateString();
-            StartTime = DateTime.Now.ToString("hh:mm tt");
+            Start();
         }
 
         public static string GetBotUptime()
@@ -61,5 +63,28 @@ namespace MODiX.Services.Services
             return StartTime!;
         }
 
+        public void Start()
+        {
+            if (IsRunning) return;
+            _timer.Start();
+            StartDate = DateTime.Now.ToShortDateString();
+            StartTime = DateTime.Now.ToString("hh:mm tt");
+
+        }
+
+        public void Stop()
+        {
+            if (!IsRunning) return;
+            
+            _timer.Stop();
+            StartDate = DateTime.Now.ToShortDateString();
+            StartTime = DateTime.Now.ToString("hh:mm tt");
+        }
+
+        public void Reset()
+        {
+            if (!IsRunning) return;
+            _timer.Reset();
+        }
     }
 }

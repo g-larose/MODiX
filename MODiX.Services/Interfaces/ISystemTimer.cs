@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace MODiX.Services.Interfaces
 {
-    public interface IBotTimer
+    public interface ISystemTimer
     {
         void Start();
         void Stop();
         void Reset();
+        int Interval { get; set; }
+        bool IsRunning { get; set; }
     }
 }

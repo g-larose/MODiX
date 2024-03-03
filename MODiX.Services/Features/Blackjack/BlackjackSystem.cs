@@ -11,7 +11,7 @@ namespace MODiX.Services.Features.Blackjack
     {
         private readonly int[] cardNumbers = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
         private readonly string[] faceCards = ["Jack", "Queen", "King"];
-        private readonly string[] cardSuits = ["Clubs", "Spades", "Hearts", "Diamonds"];
+        private readonly string[] cardSuits = [" ♣", " ♠", " ♥", " 🔸"];
 
         public int SelectedNumber { get; set; }
         public Hand[]? UserSelectedCards { get; set; }

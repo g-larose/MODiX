@@ -70,20 +70,30 @@ namespace MODiX.Commands.Commands
                    // var servers = await memService.GetMemberServersAsync(serverId.ToString()!);
                     using var db = dbFactory.CreateDbContext();
                     var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
-                    var warnings = localUser.Select(x => x.Warnings).First();
-                    var points = localUser?.First()!.Wallet!.Points.ToWords();
-                    var embed = new Embed();
-                    embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
-                    embed.SetThumbnail(author.Avatar!.AbsoluteUri);
-                    embed.AddField("Name", $"<@{author.Id}>", false);
-                    embed.AddField("Joined", author.JoinedAt.Humanize(), true);
-                    embed.AddField("Created", author.CreatedAt.Humanize(), true);
-                    embed.AddField("XP", xp, true);
-                    embed.AddField("Wallet", points, true);
-                    embed.AddField("Warnings", warnings.ToString(), true);
-                    embed.AddField("Server", server.Name, true);
 
-                    await invokator.ReplyAsync(embed);
+                    if (localUser is null || localUser.Count < 1)
+                    {
+                        await invokator.ReplyAsync($"{author.Name} is not in the database, please add {author.Name} before running profile command");
+                        return;
+                    }
+                    else
+                    {
+                        var warnings = localUser.Select(x => x.Warnings).First();
+                        var points = localUser?.First()!.Wallet!.Points.ToWords();
+                        var embed = new Embed();
+                        embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
+                        embed.SetThumbnail(author.Avatar!.AbsoluteUri);
+                        embed.AddField("Name", $"<@{author.Id}>", false);
+                        embed.AddField("Joined", author.JoinedAt.Humanize(), true);
+                        embed.AddField("Created", author.CreatedAt.Humanize(), true);
+                        embed.AddField("XP", xp, true);
+                        embed.AddField("Wallet", points, true);
+                        embed.AddField("Warnings", warnings.ToString(), true);
+                        embed.AddField("Server", server.Name, true);
+
+                        await invokator.ReplyAsync(embed);
+                    }
+                    
                 }
                 else
                 {
@@ -95,21 +105,32 @@ namespace MODiX.Commands.Commands
                     var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, user.Id, 0);
 
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(user.Id.ToString())).Include(x => x.Wallet);
-                    var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
-                    var points = localUser?.First()!.Wallet!.Points.ToWords();
-                    var embed = new Embed();
-                    embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
-                    embed.SetThumbnail(user.Avatar!.AbsoluteUri);
-                    embed.AddField("Name", $"<@{user.Id}>", false);
-                    embed.AddField("Joined", user.JoinedAt.Humanize(), true);
-                    embed.AddField("Created", user.CreatedAt.Humanize(), true);
-                    embed.AddField("XP", xp, true);
-                    embed.AddField("Wallet", points, true);
-                    embed.AddField("Warnings", warnings.ToString(), true);
-                    embed.AddField("Server", server.Name, true);
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
 
-                    await invokator.ReplyAsync(embed);
+                    if (localUser is null || localUser.Count < 1)
+                    {
+                        await invokator.ReplyAsync($"{author.Name} is not in the database, please add {author.Name} before running profile command");
+                        return;
+                    }
+                    else
+                    {
+                        var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
+                        var points = localUser?.First()!.Wallet!.Points.ToWords();
+                        var embed = new Embed();
+                        embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
+                        embed.SetThumbnail(user.Avatar!.AbsoluteUri);
+                        embed.AddField("Name", $"<@{user.Id}>", false);
+                        embed.AddField("Joined", user.JoinedAt.Humanize(), true);
+                        embed.AddField("Created", user.CreatedAt.Humanize(), true);
+                        embed.AddField("XP", xp, true);
+                        embed.AddField("Wallet", points, true);
+                        embed.AddField("Warnings", warnings.ToString(), true);
+                        embed.AddField("Server", server.Name, true);
+
+                        await invokator.ReplyAsync(embed);
+
+                    }
+                    
                 }
                 
 
@@ -239,18 +260,30 @@ namespace MODiX.Commands.Commands
 
         [Command(Aliases = new string[] { "welcome" })]
         [Description("says a random welcome message")]
-        public async Task Welcome(CommandEvent invokator, string userToWelcome)
+        public async Task Welcome(CommandEvent invokator, string userToWelcome = "")
         {
-            using var welcomerService = new WelcomerProviderService();
-            var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
-            var serverId = invokator.ServerId;
-            var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
-
-            if (welcomeMsg is not null || welcomeMsg!.Message != "")
+            if (userToWelcome is null || userToWelcome == "")
             {
-                var newMsg = welcomeMsg!.Message!.Replace("[member]", userToWelcome).Replace("[server]", server.Name);
-                await invokator.ReplyAsync($"{newMsg}", null, null, true, false);
+
             }
+            else
+            {
+                using var welcomerService = new WelcomerProviderService();
+                var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
+                var serverId = invokator.ServerId;
+                var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
+                var userId = invokator!.Mentions!.Users!.FirstOrDefault()!.Id!;
+                var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, userId);
+                var replyTo = new List<Guid>();
+                var replyToGuid = Guid.TryParse(user.Id.ToString(), out Guid g);
+                replyTo.Add(g);
+                if (welcomeMsg is not null || welcomeMsg!.Message != "")
+                {
+                    var newMsg = welcomeMsg!.Message!.Replace("[member]", userToWelcome).Replace("[server]", server.Name);
+                    await invokator.CreateMessageAsync($"{newMsg}");
+                }
+            }
+            
         }
 
         [Command(Aliases = new[] { "serverinfo" })]
@@ -312,7 +345,7 @@ namespace MODiX.Commands.Commands
         {
             var timer = new Stopwatch();
             timer.Start();
-            var reply = await invokator.CreateMessageAsync("Pong...");
+            var reply = await invokator.ReplyAsync("Pong...");
             timer.Stop();
             await reply.UpdateAsync($"Pong....took {timer.ElapsedMilliseconds}ms");
         }
@@ -321,9 +354,10 @@ namespace MODiX.Commands.Commands
         [Description("add a member to the Database")]
         public async Task AddMember(CommandEvent invokator, string mentionedMember = "")
         {
-            var memberId = invokator!.Mentions!.Users!.First().Id;
+            var memberId = invokator!.Message.CreatedBy;
+            var mentionedUserId = invokator!.Mentions!.Users!.First().Id;
             var serverId = invokator!.ServerId!;
-            var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
+            var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mentionedUserId);
             var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, memberId);
             var timer = new Stopwatch();
             timer.Start();
