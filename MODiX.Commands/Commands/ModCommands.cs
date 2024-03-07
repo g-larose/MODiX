@@ -97,15 +97,35 @@ namespace MODiX.Commands.Commands
             var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
             var authPermissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, authorId);
 
-            if (!authPermissions.Contains(Permission.ManageChannels))
+            if (authPermissions.Contains(Permission.ManageChannels))
             {
                 var mutedUser = invokator!.Mentions!.Users!.First();
+                var muted = await invokator.ParentClient.GetMemberAsync((HashId)serverId, mutedUser.Id);
                 if (mutedUser.Id.Equals(""))
                 {
                     await invokator.ReplyAsync("no mentioned user to mute, command ignored!");
                 }
                 else
                 {
+                    var roles = await invokator.ParentClient.GetMemberRolesAsync((HashId)serverId, mutedUser.Id);
+                    var mutedReason = string.Join(" ", reason);
+                    foreach (var r in roles)
+                    {
+                        try
+                        { 
+                            await invokator.ParentClient.RemoveMemberRoleAsync((HashId)serverId, mutedUser.Id, r);
+                           
+                        }
+                        catch (Exception e)
+                        {
+                            await invokator.CreateMessageAsync($"something went horrible wrong when removing {muted.Name}'s roles\r\nerror : {e.Message}");
+                            break;
+                        }
+                        await invokator.ParentClient.AddMemberRoleAsync((HashId)serverId!, mutedUser.Id, 36722104);
+                        await invokator.CreateMessageAsync($"{muted.Name} you have been muted for : {mutedReason}");
+
+                    }
+                   
                 }
             }
         }
@@ -280,7 +300,7 @@ namespace MODiX.Commands.Commands
         #region SET
         [Command(Aliases = new string[] { "set" })]
         [Description("set [limit, cooldown, timeout] ")]
-        public async Task Set(CommandEvent invokator, string command = "")
+        public async Task Set(CommandEvent invokator, string command = "", int amount = 0)
         {
             var authorId = invokator.Message.CreatedBy;
             var serverID = invokator.Message.ServerId;
@@ -290,21 +310,32 @@ namespace MODiX.Commands.Commands
 
             if (permissions.Contains(Permission.ManageServer))
             {
-                if (command == null)
+                if (command == null || command == "")
                 {
-
+                    await invokator.ReplyAsync($"{member.Name} I did not receive the command, I was expecting something like [limit] [cooldown] or [timeout]");
                 }
                 else
                 {
                     switch (command)
                     {
-
+                        case "limit":
+                             await invokator.ReplyAsync($"{member.Name} limit set [{amount}]");
+                            break;
+                        case "cooldown":
+                             await invokator.ReplyAsync($"{member.Name} cooldown set [{amount}]!");
+                            break;
+                        case "timeout":
+                             await invokator.ReplyAsync($"{member.Name} timeout set [{amount}]!");
+                            break;
+                        default:
+                            await invokator.ReplyAsync($"{member.Name} no matching command found!");
+                            break;
                     }
                 }
             }
             else
             {
-
+                await invokator.ReplyAsync($"{member.Name} you don't have the permission's to run this command, command ignored!");
             }
         }
         #endregion

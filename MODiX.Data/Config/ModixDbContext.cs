@@ -11,8 +11,19 @@ namespace MODiX.Data
         public DbSet<Suggestion>? Suggestions { get; set; }
         public DbSet<Ticket>? Tickets { get; set; }
         public DbSet<LocalChannelMessage>? Messages { get; set; }
+        public DbSet<Command>? Commands { get; set; }
 
-        public ModixDbContext(DbContextOptions options) : base(options) {}
+        public ModixDbContext(DbContextOptions options) : base(options) 
+        {
+            //try
+            //{
+            //    Database.Migrate();
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine(e);
+            //}
+        }
 
         public ModixDbContext()
         {

@@ -60,6 +60,7 @@ namespace MODiX.Commands.Commands
         {
             try
             {
+                var embed = new Embed();
                 if (mentions is null || mentions.Equals(""))
                 {
                     var authorId = invokator.Message.CreatedBy;
@@ -67,20 +68,29 @@ namespace MODiX.Commands.Commands
                     var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                     var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
                     var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, author.Id, 0);
+                    
                    // var servers = await memService.GetMemberServersAsync(serverId.ToString()!);
                     using var db = dbFactory.CreateDbContext();
                     var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
 
                     if (localUser is null || localUser.Count < 1)
                     {
-                        await invokator.ReplyAsync($"{author.Name} is not in the database, please add {author.Name} before running profile command");
+                        embed.SetTitle($"Profile for {author.Name}");
+                        embed.SetDescription($"{author.Name} isn't in the database, run add command to add this member.");
+                        embed.SetThumbnail(author.Avatar!.AbsoluteUri);
+                        embed.AddField("Name", $"<@{author.Id}>", false);
+                        embed.AddField("Joined", author.JoinedAt.Humanize(), true);
+                        embed.AddField("Created", author.CreatedAt.Humanize(), true);
+                        embed.AddField("XP", xp, true);
+                        embed.AddField("Server", server.Name, true);
+                        await invokator.ReplyAsync(embed);
                         return;
                     }
                     else
                     {
                         var warnings = localUser.Select(x => x.Warnings).First();
                         var points = localUser?.First()!.Wallet!.Points.ToWords();
-                        var embed = new Embed();
+                        embed = new Embed();
                         embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
                         embed.SetThumbnail(author.Avatar!.AbsoluteUri);
                         embed.AddField("Name", $"<@{author.Id}>", false);
@@ -109,16 +119,25 @@ namespace MODiX.Commands.Commands
 
                     if (localUser is null || localUser.Count < 1)
                     {
-                        await invokator.ReplyAsync($"{author.Name} is not in the database, please add {author.Name} before running profile command");
+                        embed.SetTitle($"Profile for {user.Name}");
+                        embed.SetDescription($"{user.Name} isn't in the database, run add command to add this member.");
+                        embed.SetThumbnail(user.Avatar!.AbsoluteUri);
+                        embed.AddField("Name", $"<@{user.Id}>", false);
+                        embed.AddField("Joined", user.JoinedAt.Humanize(), true);
+                        embed.AddField("Created", user.CreatedAt.Humanize(), true);
+                        embed.AddField("XP", xp, true);
+                        embed.AddField("Server", server.Name, true);
+                        await invokator.ReplyAsync(embed);
                         return;
                     }
                     else
                     {
                         var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
-                        var points = localUser?.First()!.Wallet!.Points.ToWords();
-                        var embed = new Embed();
+                        var points = localUser?.FirstOrDefault()!.Wallet!.Points.ToWords();
+                        embed = new Embed();
                         embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
-                        embed.SetThumbnail(user.Avatar!.AbsoluteUri);
+                        if (user.Avatar.AbsoluteUri != "")
+                            embed.SetThumbnail(user.Avatar!.AbsoluteUri);
                         embed.AddField("Name", $"<@{user.Id}>", false);
                         embed.AddField("Joined", user.JoinedAt.Humanize(), true);
                         embed.AddField("Created", user.CreatedAt.Humanize(), true);
@@ -399,5 +418,5 @@ namespace MODiX.Commands.Commands
             }
             
         }
-}
+    }
 }

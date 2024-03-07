@@ -26,6 +26,9 @@ namespace MODiX
         private static readonly string? token  = JsonSerializer.Deserialize<ConfigJson>(json!)!.Token!;
         private static readonly string? prefix = JsonSerializer.Deserialize<ConfigJson>(json!)!.Prefix!;
         private static readonly string? timePattern = "hh:mm:ss tt";
+
+        private List<(string, string)> joins = new();
+        DateTime lastJoinedAt;
         private IMessageHandler? msgHandler { get; set; }
         private readonly ModixDbContextFactory? _dbFactory = new();
         public async Task RunAsync()
@@ -38,7 +41,8 @@ namespace MODiX
                 .AddCommands(new ConfigCommands(), prefix!)
                 .AddCommands(new WikiCommands(), prefix!)
                 .AddCommands(new BlackjackCommands(), prefix!)
-                .AddCommands(new EconomyCommands(), prefix!);
+                .AddCommands(new EconomyCommands(), prefix!)
+                .AddCommands(new DiceCommands(), prefix!);
 
             client.Prepared
                 .Subscribe(async me =>
@@ -51,21 +55,22 @@ namespace MODiX
             client.MemberJoined
                 .Subscribe(async memJoined =>
                 {
-                    using var welcomerService = new WelcomerProviderService();
-                    var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
+                    
+                    using var welcomerService = new WelcomerProviderService();
+                    var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
+                    
                     var serverId = memJoined.ServerId;
                     var server = await memJoined.ParentClient.GetServerAsync((HashId)serverId);
                     var defaultChannelId = (Guid)server.DefaultChannelId!;
                     var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
                     //await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36312173);
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [{memJoined.ParentClient.Name}] {memJoined.Name} joined the server.");
+                    Console.WriteLine($"[{date}][{time}][INFO]  [{memJoined.ParentClient.Name}] {memJoined.Name} joined the {server.Name}.");
                     var newMsg = welcomeMsg!.Message!.Replace("[member]", memJoined.Name).Replace("[server]", server.Name);
                     var embed = new Embed();
-                    embed.SetDescription(
-                        $"{newMsg} , please read our code of conduct here {channel}");
+                    embed.SetDescription($"{newMsg}");
                     embed.SetFooter("MODiX watching everything ");
                     embed.SetTimestamp(DateTime.Now);
                     await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, false, false, embed);
@@ -135,7 +140,7 @@ namespace MODiX
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [{author.Name}] deleted msg [{msg.Content}] from [{server.Name}]");
+                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] [{author.Name}] deleted msg [{msg.Content}] from server [{server.Name}]");
 
                 });
 
