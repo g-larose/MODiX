@@ -78,11 +78,13 @@ namespace MODiX.Commands.Commands
                         embed.SetTitle($"Profile for {author.Name}");
                         embed.SetDescription($"{author.Name} isn't in the database, run add command to add this member.");
                         embed.SetThumbnail(author.Avatar!.AbsoluteUri);
-                        embed.AddField("Name", $"<@{author.Id}>", false);
+                        embed.AddField("Name", $"<@{author.Id}> ({author.Id})", false);
                         embed.AddField("Joined", author.JoinedAt.Humanize(), true);
                         embed.AddField("Created", author.CreatedAt.Humanize(), true);
                         embed.AddField("XP", xp, true);
                         embed.AddField("Server", server.Name, true);
+                        embed.SetFooter("MODiX watching everything ");
+                        embed.SetTimestamp(DateTime.Now);
                         await invokator.ReplyAsync(embed);
                         return;
                     }
@@ -93,14 +95,15 @@ namespace MODiX.Commands.Commands
                         embed = new Embed();
                         embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
                         embed.SetThumbnail(author.Avatar!.AbsoluteUri);
-                        embed.AddField("Name", $"<@{author.Id}>", false);
+                        embed.AddField("Name", $"<@{author.Id}> ({author.Id})", false);
                         embed.AddField("Joined", author.JoinedAt.Humanize(), true);
                         embed.AddField("Created", author.CreatedAt.Humanize(), true);
                         embed.AddField("XP", xp, true);
                         embed.AddField("Wallet", points, true);
                         embed.AddField("Warnings", warnings.ToString(), true);
                         embed.AddField("Server", server.Name, true);
-
+                        embed.SetFooter("MODiX watching everything ");
+                        embed.SetTimestamp(DateTime.Now);
                         await invokator.ReplyAsync(embed);
                     }
                     
@@ -122,11 +125,13 @@ namespace MODiX.Commands.Commands
                         embed.SetTitle($"Profile for {user.Name}");
                         embed.SetDescription($"{user.Name} isn't in the database, run add command to add this member.");
                         embed.SetThumbnail(user.Avatar!.AbsoluteUri);
-                        embed.AddField("Name", $"<@{user.Id}>", false);
+                        embed.AddField("Name", $"<@{user.Id}> ({author.Id})", false);
                         embed.AddField("Joined", user.JoinedAt.Humanize(), true);
                         embed.AddField("Created", user.CreatedAt.Humanize(), true);
                         embed.AddField("XP", xp, true);
                         embed.AddField("Server", server.Name, true);
+                        embed.SetFooter("MODiX watching everything ");
+                        embed.SetTimestamp(DateTime.Now);
                         await invokator.ReplyAsync(embed);
                         return;
                     }
@@ -138,14 +143,15 @@ namespace MODiX.Commands.Commands
                         embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
                         if (user.Avatar.AbsoluteUri != "")
                             embed.SetThumbnail(user.Avatar!.AbsoluteUri);
-                        embed.AddField("Name", $"<@{user.Id}>", false);
+                        embed.AddField("Name", $"<@{user.Id}> ({author.Id})", false);
                         embed.AddField("Joined", user.JoinedAt.Humanize(), true);
                         embed.AddField("Created", user.CreatedAt.Humanize(), true);
                         embed.AddField("XP", xp, true);
                         embed.AddField("Wallet", points, true);
                         embed.AddField("Warnings", warnings.ToString(), true);
                         embed.AddField("Server", server.Name, true);
-
+                        embed.SetFooter("MODiX watching everything ");
+                        embed.SetTimestamp(DateTime.Now);
                         await invokator.ReplyAsync(embed);
 
                     }
@@ -298,7 +304,7 @@ namespace MODiX.Commands.Commands
                 replyTo.Add(g);
                 if (welcomeMsg is not null || welcomeMsg!.Message != "")
                 {
-                    var newMsg = welcomeMsg!.Message!.Replace("[member]", userToWelcome).Replace("[server]", server.Name);
+                    var newMsg = welcomeMsg!.Message!.Replace($"[member]", $"<@{user.Id}>").Replace("[server]", server.Name);
                     await invokator.CreateMessageAsync($"{newMsg}");
                 }
             }

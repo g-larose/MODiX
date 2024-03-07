@@ -42,7 +42,8 @@ namespace MODiX
                 .AddCommands(new WikiCommands(), prefix!)
                 .AddCommands(new BlackjackCommands(), prefix!)
                 .AddCommands(new EconomyCommands(), prefix!)
-                .AddCommands(new DiceCommands(), prefix!);
+                .AddCommands(new DiceCommands(), prefix!)
+                .AddCommands(new TagCommands(), prefix!);
 
             client.Prepared
                 .Subscribe(async me =>

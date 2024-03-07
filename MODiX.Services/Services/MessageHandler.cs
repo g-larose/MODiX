@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Guilded.Base;
+using Guilded.Base.Embeds;
 using Guilded.Content;
 using Guilded.Permissions;
 using Microsoft.VisualBasic;
@@ -42,8 +44,10 @@ namespace MODiX.Services.Services
                             await Task.Delay(100);
                         }
 
-                        await message.ReplyAsync(
-                            $"{MessageAuthor} you are sending the same message to fast, slow down or you will be muted! {MessageCount}");
+                        var embed = new Embed();
+                        embed.SetDescription($"{MessageAuthor} you are sending the same message to fast, slow down or you will be muted!");
+                        embed.SetColor(EmbedColorService.GetColor("gray", Color.Gray));
+                        await message.ReplyAsync(embed);
                         MessageCount = 0;
                         MessageAuthor = "";
                         Message = null;

@@ -17,72 +17,103 @@ namespace MODiX.Commands.Commands
         private static string? timePattern = "hh:mm:ss tt";
 
         #region WARN
-        [Command(Aliases= new string[] { "warn", "w" })]
+        [Command(Aliases = new string[] { "warn", "w" })]
         [Description("warns another server member with a reason for the warning.")]
-        public async Task Warn(CommandEvent invokator, string user, string[] reason)
+        public async Task Warn(CommandEvent invokator, string user = "", string[] reason = null)
         {
-            var authorId = invokator.Message.CreatedBy;
-            var serverID = invokator.Message.ServerId;
-            var author = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
-            var permissions = await author.GetPermissionsAsync();
-            if (permissions.Contains(Permission.ManageChannels)) // if the message invokor doesn't have the correct permissions we ignore the command
+            try
             {
-                var args = string.Join(" ", reason);
-
                 var embed = new Embed();
-               
-                var _userId = invokator!.Mentions!.Users!.First().Id;
-                var _user = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, _userId);
-                var userXp = await invokator.ParentClient.AddXpAsync((HashId)serverID!, _userId, 0);
-                var warnedUser = dbContext!.ServerMembers!.Where(x => x.Nickname == _user.Name).ToList();
-                if (warnedUser.Count > 0)
+                var authorId = invokator.Message.CreatedBy;
+                var serverID = invokator.Message.ServerId;
+                var author = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+                if (user == "" || reason is null)
                 {
-                    warnedUser!.FirstOrDefault()!.Warnings += 1;
-                    embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
-                    embed.AddField(new EmbedField("Issued To:", $"<@{warnedUser!.FirstOrDefault()!.Nickname}>", true));
-                    embed.AddField(new EmbedField("Reason:", $"{args}", false));
-                    embed.AddField(new EmbedField("Warnings:", $"{warnedUser!.FirstOrDefault()!.Warnings + 1}", false));
-                    dbContext.Update(warnedUser);
-                    await dbContext.SaveChangesAsync();
+                    embed.SetDescription($"<@{author.Id}> no command args found, please mention an member with a reason for the warning.");
+                    await invokator.ReplyAsync(embed);
+                    return;
+                }
+               
+                var permissions = await author.GetPermissionsAsync();
+                if (permissions.Contains(Permission.ManageChannels)) // if the message invokor doesn't have the correct permissions we ignore the command
+                {
+                    var args = string.Join(" ", reason);
+
+                    
+
+                    var _userId = invokator!.Mentions!.Users!.First().Id;
+                    var _user = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, _userId);
+                    var userXp = await invokator.ParentClient.AddXpAsync((HashId)serverID!, _userId, 0);
+                    var warnedUser = dbContext!.ServerMembers!.Where(x => x.Nickname == _user.Name)
+                        .Select(x => x).FirstOrDefault();
+
+                    if (warnedUser!.Warnings >= 4)
+                    {
+                        await invokator.ParentClient.RemoveMemberAsync((HashId)serverID!, _user.Id);
+                        await invokator.ParentClient.AddMemberBanAsync((HashId)serverID!, _user.Id);
+                    }
+                    else
+                    {
+                        if (warnedUser is not null)
+                        {
+                            warnedUser!.Warnings += 1;
+                            embed.SetDescription($"<@{_user.Id}> this is a warning!");
+                            embed.AddField(new EmbedField("Issued By:", $"{author.Name}", true));
+                            embed.AddField(new EmbedField("Issued To:", $"{_user.Name}", true));
+                            embed.AddField(new EmbedField("Reason:", $"{args}", false));
+                            embed.AddField(new EmbedField("Warnings:", $"{warnedUser!.Warnings}", false));
+                            dbContext.Update(warnedUser);
+                            await dbContext.SaveChangesAsync();
+                        }
+                        else
+                        {
+                            var newUser = new LocalServerMember();
+                            newUser.Id = Guid.NewGuid();
+                            newUser.UserId = _user.Id.ToString();
+                            newUser.ServerId = serverID.ToString();
+                            newUser.Nickname = _user.Name;
+                            newUser.CreatedAt = DateTime.UtcNow;
+                            newUser.JoinedAt = _user.JoinedAt;
+                            newUser.Warnings += 1;
+                            newUser.Messages = null;
+                            newUser.Xp = int.Parse(userXp.ToString());
+                            newUser.RoleIds = new List<uint>();
+
+                            await dbContext.AddAsync(newUser);
+                            await dbContext.SaveChangesAsync();
+
+                            embed.SetDescription($"<@{_user.Id}> this is a warning!");
+                            embed.AddField(new EmbedField("Issued By:", $"{author.Name}", true));
+                            embed.AddField(new EmbedField("Issued To:", $"{_user.Name}", false));
+                            embed.AddField(new EmbedField("Reason:", $"{args}", false));
+                            embed.AddField(new EmbedField("Warnings:", $"{newUser.Warnings}", false));
+
+                        }
+
+
+
+                        await invokator.DeleteAsync();
+                        await invokator.CreateMessageAsync(embed);
+                    }
+
+                    
                 }
                 else
                 {
-                    var newUser = new LocalServerMember();
-                    newUser.Id = Guid.NewGuid();
-                    newUser.UserId = _user.Id.ToString();
-                    newUser.ServerId = serverID.ToString();
-                    newUser.Nickname = _user.Name;
-                    newUser.CreatedAt = DateTime.UtcNow;
-                    newUser.JoinedAt = _user.JoinedAt;
-                    newUser.Warnings += 1;
-                    newUser.Messages = null;
-                    newUser.Xp = int.Parse(userXp.ToString());
-                    newUser.RoleIds = new List<uint>();
+                    embed = new Embed();
+                    embed.SetDescription(
+                        $"<@{author.Id}> you do not have the permissions to execute this command, command ignored!");
 
-                    await dbContext.AddAsync(newUser);
-                    await dbContext.SaveChangesAsync();
-
-                    embed.AddField(new EmbedField("Issued By:", $"<@{author.Id}>", true));
-                    embed.AddField(new EmbedField("Issued To:", $"<@{newUser.Id}>", false));
-                    embed.AddField(new EmbedField("Reason:", $"{args}", false));
-                    embed.AddField(new EmbedField("Warnings:", $"{newUser.Warnings + 1}", false));
-
+                    await invokator.Message.DeleteAsync();
+                    await invokator.ReplyAsync(embed);
                 }
-                    
-
-
-                await invokator.DeleteAsync();
-                await invokator.CreateMessageAsync(embed);
             }
-            else
+            catch (Exception e)
             {
-                var embed = new Embed();
-                embed.SetDescription(
-                    $"<@{author.Id}> you do not have the permissions to execute this command, command ignored!");
-
-                await invokator.Message.DeleteAsync();
-                await invokator.ReplyAsync(embed);
+                var errorId = Guid.NewGuid();
+                await invokator.ReplyAsync($"something went horrible wrong, please refer {errorId} to a mod");
             }
+            
             
         }
         #endregion
