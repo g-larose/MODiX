@@ -25,7 +25,7 @@ namespace MODiX.Commands.Commands
 
             if (!rollResult.IsValid)
             {
-                embed.SetTitle($"<@{authorId}> Dice Roller return an invalid roll, please try again");
+                embed.SetTitle($"<@{rollResult.Member!.Id}> Dice Roller max die amount is 12 and max sides is 12, you tried to exceed that amount\r\nERROR!");
                 embed.AddField("Id", rollResult.Id, true);
                 embed.AddField("Rolled At", rollResult.RolledAt!, true);
                 embed.SetFooter($"MODiX watching everyone ");

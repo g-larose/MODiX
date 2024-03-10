@@ -58,25 +58,34 @@ namespace MODiX
                 {
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
-                    
-                    using var welcomerService = new WelcomerProviderService();
-                    var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
-                    
                     var serverId = memJoined.ServerId;
                     var server = await memJoined.ParentClient.GetServerAsync((HashId)serverId);
                     var defaultChannelId = (Guid)server.DefaultChannelId!;
-                    var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
-                    //await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36312173);
-                    Console.ForegroundColor = ConsoleColor.DarkGreen;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [{memJoined.ParentClient.Name}] {memJoined.Name} joined the {server.Name}.");
-                    var newMsg = welcomeMsg!.Message!.Replace("[member]", memJoined.Name).Replace("[server]", server.Name);
-                    var embed = new Embed();
-                    embed.SetDescription($"{newMsg}");
-                    embed.SetFooter("MODiX watching everything ");
-                    embed.SetTimestamp(DateTime.Now);
-                    await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, false, false, embed);
-                    using var memService = new ServerMemberService();
-                    var _ = await memService.AddServerMemberToDBAsync(memJoined.ParentClient, memJoined.Member);
+                    try
+                    {
+                        using var welcomerService = new WelcomerProviderService();
+                        var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
+
+                        
+                        var channel = $"[#📃| rules](https://www.guilded.gg/teams/jynyD3AR/channels/ccefeed6-ab00-4258-836c-14d4cfa3050d/chat)";
+                        //await memJoined.ParentClient.AddMemberRoleAsync((HashId)serverId, memJoined.Member.Id, 36312173);
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+                        Console.WriteLine($"[{date}][{time}][INFO]  [{memJoined.ParentClient.Name}] {memJoined.Name} joined the {server.Name}.");
+                        var newMsg = welcomeMsg!.Message!.Replace("[member]", $"<@{memJoined.Id}>").Replace("[server]", server.Name);
+                        var embed = new Embed();
+                        embed.SetDescription($"{newMsg}");
+                        embed.SetFooter("MODiX watching everything ");
+                        embed.SetTimestamp(DateTime.Now);
+                        await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, false, false, embed);
+                        using var memService = new ServerMemberService();
+                        var _ = await memService.AddServerMemberToDBAsync(memJoined.ParentClient, memJoined.Member);
+                    }
+                    catch(Exception e)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.WriteLine($"[{date}][{time}][ERROR]  [{e.Message}] in server: {server.Name}.");
+                    }
+                   
 
                 });
 
@@ -137,11 +146,13 @@ namespace MODiX
                     var serverID = msg.ServerId;
                     var author = await msg.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
                     var server = await msg.ParentClient.GetServerAsync((HashId)serverID!);
+                    var channelId = msg.ChannelId;
+                    var channel = await msg.ParentClient.GetChannelAsync((Guid)channelId!);
                     //TODO: handle deleted messages.
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] [{author.Name}] deleted msg [{msg.Content}] from server [{server.Name}]");
+                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] [{author.Name}] deleted msg [{msg.Content}] from {server.Name} in channel [{channel.Name}]");
 
                 });
 
@@ -163,15 +174,21 @@ namespace MODiX
                  {
                      var time = DateTime.Now.ToString(timePattern);
                      var date = DateTime.Now.ToShortDateString();
+
                      var serverId = server.ServerId;
                      var members = await server.ParentClient.GetMembersAsync((HashId)serverId);
+                     var _server = await server.ParentClient.GetServerAsync((HashId)serverId!);
+                    
+                     var defaultChannelId = _server.DefaultChannelId;
+                     var message = new MessageContent($"Thank you for inviting me to {_server.Name}\r\nin order for me to function properly I need all Permissions.\r\nwithout all permissions some features may not work properly.");
+                     await _server.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, message);
                      var localServerUser = new LocalServerMember();
                      Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] has been added to: [{server.Server.Name}]");
                      if (members.Count > 0)
                      {
                          foreach (var mem in members)
                          {
-
+                            
                          }
 
                      }

@@ -1,11 +1,14 @@
-﻿using System.Drawing;
+﻿using System.Diagnostics;
+using System.Drawing;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
 using Guilded.Content;
 using Guilded.Permissions;
 using Guilded.Users;
+using Microsoft.EntityFrameworkCore;
 using MODiX.Data;
+using MODiX.Data.Factories;
 using MODiX.Data.Models;
 using MODiX.Services.Services;
 
@@ -13,7 +16,8 @@ namespace MODiX.Commands.Commands
 {
     public class ModCommands : CommandModule
     {
-        private readonly ModixDbContext dbContext = new ModixDbContext();
+        private readonly ModixDbContextFactory dbFactory = new();
+        private readonly ServerMemberService memService = new();
         private static string? timePattern = "hh:mm:ss tt";
 
         #region WARN
@@ -23,6 +27,7 @@ namespace MODiX.Commands.Commands
         {
             try
             {
+                 var db = dbFactory.CreateDbContext();
                 var embed = new Embed();
                 var authorId = invokator.Message.CreatedBy;
                 var serverID = invokator.Message.ServerId;
@@ -38,23 +43,22 @@ namespace MODiX.Commands.Commands
                 if (permissions.Contains(Permission.ManageChannels)) // if the message invokor doesn't have the correct permissions we ignore the command
                 {
                     var args = string.Join(" ", reason);
-
-                    
-
+                   
                     var _userId = invokator!.Mentions!.Users!.First().Id;
                     var _user = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, _userId);
-                    var userXp = await invokator.ParentClient.AddXpAsync((HashId)serverID!, _userId, 0);
-                    var warnedUser = dbContext!.ServerMembers!.Where(x => x.Nickname == _user.Name)
+                    var userXp = await invokator.ParentClient.AddXpAsync((HashId)serverID!, _userId, -150);
+                    var warnedUser = db.ServerMembers!.Where(x => x.Nickname == _user.Name)
                         .Select(x => x).FirstOrDefault();
 
-                    if (warnedUser!.Warnings >= 4)
+                    if (warnedUser is not null)
                     {
-                        await invokator.ParentClient.RemoveMemberAsync((HashId)serverID!, _user.Id);
-                        await invokator.ParentClient.AddMemberBanAsync((HashId)serverID!, _user.Id);
-                    }
-                    else
-                    {
-                        if (warnedUser is not null)
+                        if (warnedUser!.Warnings >= 4)
+                        {
+                            await invokator.ParentClient.RemoveMemberAsync((HashId)serverID!, _user.Id);
+                            await invokator.ParentClient.AddMemberBanAsync((HashId)serverID!, _user.Id);
+
+                        }
+                        else
                         {
                             warnedUser!.Warnings += 1;
                             embed.SetDescription($"<@{_user.Id}> this is a warning!");
@@ -62,41 +66,37 @@ namespace MODiX.Commands.Commands
                             embed.AddField(new EmbedField("Issued To:", $"{_user.Name}", true));
                             embed.AddField(new EmbedField("Reason:", $"{args}", false));
                             embed.AddField(new EmbedField("Warnings:", $"{warnedUser!.Warnings}", false));
-                            dbContext.Update(warnedUser);
-                            await dbContext.SaveChangesAsync();
+                            db.Update(warnedUser);
+                            await db.SaveChangesAsync();
                         }
-                        else
-                        {
-                            var newUser = new LocalServerMember();
-                            newUser.Id = Guid.NewGuid();
-                            newUser.UserId = _user.Id.ToString();
-                            newUser.ServerId = serverID.ToString();
-                            newUser.Nickname = _user.Name;
-                            newUser.CreatedAt = DateTime.UtcNow;
-                            newUser.JoinedAt = _user.JoinedAt;
-                            newUser.Warnings += 1;
-                            newUser.Messages = null;
-                            newUser.Xp = int.Parse(userXp.ToString());
-                            newUser.RoleIds = new List<uint>();
+                    }
+                    else
+                    {
+                        
+                        var newUser = new LocalServerMember();
+                        newUser.Id = Guid.NewGuid();
+                        newUser.UserId = _user.Id.ToString();
+                        newUser.ServerId = serverID.ToString();
+                        newUser.Nickname = _user.Name;
+                        newUser.CreatedAt = DateTime.UtcNow;
+                        newUser.JoinedAt = _user.JoinedAt;
+                        newUser.Warnings += 1;
+                        newUser.Messages = null;
+                        newUser.Xp = int.Parse(userXp.ToString());
+                        newUser.RoleIds = new List<uint>();
 
-                            await dbContext.AddAsync(newUser);
-                            await dbContext.SaveChangesAsync();
+                        await db.AddAsync(newUser);
+                        await db.SaveChangesAsync();
 
-                            embed.SetDescription($"<@{_user.Id}> this is a warning!");
-                            embed.AddField(new EmbedField("Issued By:", $"{author.Name}", true));
-                            embed.AddField(new EmbedField("Issued To:", $"{_user.Name}", false));
-                            embed.AddField(new EmbedField("Reason:", $"{args}", false));
-                            embed.AddField(new EmbedField("Warnings:", $"{newUser.Warnings}", false));
-
-                        }
-
-
+                        embed.SetDescription($"<@{_user.Id}> this is a warning!");
+                        embed.AddField(new EmbedField("Issued By:", $"{author.Name}", true));
+                        embed.AddField(new EmbedField("Issued To:", $"{_user.Name}", false));
+                        embed.AddField(new EmbedField("Reason:", $"{args}", false));
+                        embed.AddField(new EmbedField("Warnings:", $"{newUser.Warnings}", false));
 
                         await invokator.DeleteAsync();
                         await invokator.CreateMessageAsync(embed);
-                    }
-
-                    
+                    } 
                 }
                 else
                 {
@@ -111,7 +111,7 @@ namespace MODiX.Commands.Commands
             catch (Exception e)
             {
                 var errorId = Guid.NewGuid();
-                await invokator.ReplyAsync($"something went horrible wrong, please refer {errorId} to a mod");
+                await invokator.ReplyAsync($"ERROR: {e.Message}, please refer {errorId} to a mod");
             }
             
             
@@ -369,6 +369,50 @@ namespace MODiX.Commands.Commands
                 await invokator.ReplyAsync($"{member.Name} you don't have the permission's to run this command, command ignored!");
             }
         }
+        #endregion
+
+        #region ADD MEMBER
+
+        [Command(Aliases = new string[] { "addmember", "addmem" })]
+        [Description("add a member to the Database")]
+        public async Task AddMember(CommandEvent invokator, string mentionedMember = "")
+        {
+            var memberId = invokator!.Message.CreatedBy;
+            var mentionedUserId = invokator!.Mentions!.Users!.First().Id;
+            var serverId = invokator!.ServerId!;
+            var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mentionedUserId);
+            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, memberId);
+            var timer = new Stopwatch();
+            timer.Start();
+            if (!permissions.Contains(Guilded.Permissions.Permission.ManageServer))
+            {
+                timer.Stop();
+
+                await invokator.ReplyAsync($"{user.Name} you do not have the appropiate permission to manage members, command ignored! took... **{timer.ElapsedMilliseconds}**ms to execute");
+
+                return;
+            }
+            else
+            {
+
+                var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
+                if (result.IsOk)
+                {
+                    var db = dbFactory.CreateDbContext();
+                    var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString()).Include(x => x.Wallet).ToList();
+                    timer.Stop();
+                    await invokator.ReplyAsync($"member {user.Name} has been added to the db with [{newMem.First()!.Wallet!.Points}] points added to their wallet, command took... **{timer.ElapsedMilliseconds}**ms to execute");
+                }
+                else
+                {
+                    timer.Stop();
+                    await invokator.ReplyAsync($"member already exists in the db, command ignored! command took... **{timer.ElapsedMilliseconds}**ms to execute");
+                }
+
+            }
+
+        }
+
         #endregion
     }
 }

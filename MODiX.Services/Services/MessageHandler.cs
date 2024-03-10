@@ -27,6 +27,7 @@ namespace MODiX.Services.Services
             var authorId = message.CreatedBy;
             var serverId = message.ServerId;
             var channelId = message.ChannelId;
+            var embed = new Embed();
             try
             {
                 var author = await message.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
@@ -44,8 +45,8 @@ namespace MODiX.Services.Services
                             await Task.Delay(100);
                         }
 
-                        var embed = new Embed();
-                        embed.SetDescription($"{MessageAuthor} you are sending the same message to fast, slow down or you will be muted!");
+                        
+                        embed.SetDescription($"<@{author.Id}> you are sending the same message to fast, slow down or you will be muted!");
                         embed.SetColor(EmbedColorService.GetColor("gray", Color.Gray));
                         await message.ReplyAsync(embed);
                         MessageCount = 0;
@@ -65,12 +66,15 @@ namespace MODiX.Services.Services
 
                 if (regex.IsMatch(message.Content!))//convert this into a switch expression to handle different senerios.
                 {
+                    if (message.ChannelId.Equals(""))
+                        return;
                     var permissions = await author.GetPermissionsAsync();
                     if (!permissions.Contains(Permission.ManageChannels))
                     {
                         await message.ParentClient.DeleteMessageAsync(channelId, message.Id);
-                        await message.ReplyAsync(
-                            $"`{author.Name}` your message contained block content and was removed");
+                        embed.SetDescription($"<@{author.Id}> your message contained block content and was removed");
+                        embed.SetColor(EmbedColorService.GetColor("gray", Color.Gray));
+                        await message.ReplyAsync(embed);
                     }
                 }
             }

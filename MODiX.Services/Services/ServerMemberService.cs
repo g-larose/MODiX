@@ -20,7 +20,7 @@ namespace MODiX.Services.Services
     {
         private ModixDbContextFactory _dbFactory = new();
         
-        public async Task<bool> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member)
+        public async Task<Result<Member, string>> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member)
         {
             var serverId = member.ServerId;
             var memberId = member.Id;
@@ -30,7 +30,7 @@ namespace MODiX.Services.Services
             using var db = _dbFactory.CreateDbContext();
             var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString() && x.ServerId!.Equals(member.ServerId.ToString()));
 
-            if (localMember.Count() > 0) return false;
+            if (localMember.Count() > 0) return "error: member already exists in the database.";
 
             var newMember = new LocalServerMember
             {
@@ -52,13 +52,37 @@ namespace MODiX.Services.Services
 
             await db!.AddAsync(newMember);
             await db.SaveChangesAsync();
-            return true;
+            return member;
             
         }
 
-        public Task<bool> AddWarningAsync(HashId memberId)
+        public async Task<Result<Member, string>> AddWarningAsync(string memberId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var db = _dbFactory.CreateDbContext();
+                var member = db.ServerMembers!.Where(x => x.UserId == memberId).FirstOrDefault();
+                if (member is not null)
+                {
+                    var warnings = member.Warnings += 1;
+                    member.Warnings = warnings;
+                    db.Update(member);
+                    await db.SaveChangesAsync();
+                    return "success";
+                }
+                else
+                {
+                    var localMember = new LocalServerMember();
+
+                }
+                   
+            }
+            catch(Exception e)
+            {
+                return $"failure: {e.Message}";
+            }
+             return "member not found";
+            
         }
 
         public Task<bool> BanMemberAsync(HashId memberId)

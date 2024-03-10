@@ -22,7 +22,7 @@ namespace MODiX.Services.Services
             return members;
         }
 
-        public LocalServerMember GetMemberFromDb(string username)
+        public async Task<LocalServerMember> GetMemberFromDb(string username)
         {
             throw new NotImplementedException();
         }

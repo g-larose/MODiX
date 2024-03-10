@@ -19,21 +19,33 @@ namespace MODiX.Services.Services
             var time = DateTime.Now.ToShortTimeString();
             try
             {
-                
-                for (int i = 0; i < dieAmount; i++)
+                if (dieAmount > 12 || sides > 12)
                 {
-                    var num = rnd.Next(1, sides);
-                    roller.Die!.Add(num);
+                    roller.Id = Guid.Empty;
+                    roller.Sides = sides;
+                    roller.RolledAt = $"{date} {time}";
+                    roller.IsValid = false;
+                    roller.Member = member;
+
                 }
-                roller.Id = Guid.NewGuid();
-                roller.Sides = sides;
-                roller.RolledAt = $"{date} {time}";
-                roller.IsValid = true;
-                roller.Member = member;
+                else
+                {
+                    for (int i = 0; i < dieAmount; i++)
+                    {
+                        var num = rnd.Next(1, sides);
+                        roller.Die!.Add(num);
+                    }
+                    roller.Id = Guid.NewGuid();
+                    roller.Sides = sides;
+                    roller.RolledAt = $"{date} {time}";
+                    roller.IsValid = true;
+                    roller.Member = member;
+                }
+               
             }
             catch
             {
-                roller.Id = Guid.NewGuid();
+                roller.Id = Guid.Empty;
                 roller.IsValid = false;
                 roller.Member = member;
                 roller.RolledAt = $"{date} {time}";

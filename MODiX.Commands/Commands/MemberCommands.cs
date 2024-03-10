@@ -12,6 +12,7 @@ using MODiX.Services.Features.Music;
 using MODiX.Services.Features.Welcomer;
 using MODiX.Services.Services;
 using Humanizer;
+using MODiX.Data.Models;
 
 namespace MODiX.Commands.Commands
 {
@@ -287,16 +288,21 @@ namespace MODiX.Commands.Commands
         [Description("says a random welcome message")]
         public async Task Welcome(CommandEvent invokator, string userToWelcome = "")
         {
+            var serverId = invokator.ServerId;
+            var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
+            var authorId = invokator.Message.CreatedBy;
+            var author = invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+
             if (userToWelcome is null || userToWelcome == "")
             {
-
+               
+                await invokator.ReplyAsync($"<@{authorId}> I was expecting a member to welcome, no member provided.");
             }
             else
             {
                 using var welcomerService = new WelcomerProviderService();
                 var welcomeMsg = await welcomerService.GetRandomWelcomeMessageAsync();
-                var serverId = invokator.ServerId;
-                var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
+               
                 var userId = invokator!.Mentions!.Users!.FirstOrDefault()!.Id!;
                 var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, userId);
                 var replyTo = new List<Guid>();
@@ -322,13 +328,19 @@ namespace MODiX.Commands.Commands
             var ownerId = server.OwnerId;
             var owner = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, ownerId);
             var members = await serverService.GetServerMembersAsync(client, (HashId)serverId!);
+            var memberCount = 0;
+            for (int i = 0; i < members.Count; i++)
+            {
+                if (!members[i].IsBot)
+                    memberCount++;
+            }
 
             var embed = new Embed();
             embed.SetTitle($"{server.Name} Info");
             embed.AddField("Server Name", server.Name, true);
             embed.AddField("Created", server.CreatedAt.Humanize(), true);
             embed.AddField("Owner", owner.Name, true);
-            embed.AddField("Member Count", members.Count, true);
+            embed.AddField("Member Count", memberCount, true);
             embed.SetFooter($"{invokator.ParentClient.Name} watching everything ");
             embed.SetTimestamp(DateTime.Now);
 
@@ -375,54 +387,6 @@ namespace MODiX.Commands.Commands
             await reply.UpdateAsync($"Pong....took {timer.ElapsedMilliseconds}ms");
         }
 
-        [Command(Aliases = new string[] { "addmember", "addmem" })]
-        [Description("add a member to the Database")]
-        public async Task AddMember(CommandEvent invokator, string mentionedMember = "")
-        {
-            var memberId = invokator!.Message.CreatedBy;
-            var mentionedUserId = invokator!.Mentions!.Users!.First().Id;
-            var serverId = invokator!.ServerId!;
-            var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mentionedUserId);
-            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, memberId);
-            var timer = new Stopwatch();
-            timer.Start();
-            if (!permissions.Contains(Guilded.Permissions.Permission.ManageServer))
-            {
-                timer.Stop();
-
-                await invokator.ReplyAsync($"{user.Name} you do not have the appropiate permission to manage members, command ignored! took... **{timer.ElapsedMilliseconds}**ms to execute");
-                
-                return;
-            }
-            else
-            {
-                if (mentionedMember == "")
-                {
-                    timer.Stop();
-                    await invokator.ReplyAsync($"no member to add, command ignored! took... **{timer.ElapsedMilliseconds}**ms to fire");
-                }
-                else
-                {
-
-
-                    var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
-                    if (result)
-                    {
-                        var db = dbFactory.CreateDbContext();
-                        var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString()).Include(x => x.Wallet).ToList();
-                        timer.Stop();
-                        await invokator.ReplyAsync($"member {user.Name} has been added to the db with [{newMem.First()!.Wallet!.Points}] points added to their wallet, command took... **{timer.ElapsedMilliseconds}**ms to execute");
-                    }
-                    else
-                    {
-                        timer.Stop();
-                        await invokator.ReplyAsync($"member already exists in the db, command ignored! command took... **{timer.ElapsedMilliseconds}**ms to execute");
-                    }
-                        
-
-                }
-            }
-            
-        }
+       
     }
 }

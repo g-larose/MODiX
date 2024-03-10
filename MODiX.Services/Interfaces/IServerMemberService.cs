@@ -13,8 +13,8 @@ namespace MODiX.Services.Interfaces
         Task<LocalServerMember> GetServerMemberAsync(HashId memberId);
         Task<string[]> GetMembersPermissions(Member member);
         Task<Server[]> GetMemberServersAsync(string userId);
-        Task<bool> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member);
-        Task<bool> AddWarningAsync(HashId memberId);
+        Task<Result<Member, string>> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member);
+        Task<Result<Member, string>> AddWarningAsync(string memberId);
         Task<bool> KickServerMemberAsync(HashId memberId);
         Task<bool> BanMemberAsync(HashId memberId);
         Task<bool> UnBanMemberAsync(HashId memberId);
