@@ -28,10 +28,10 @@ namespace MODiX.Services.Services
             var xp = await ctx.AddXpAsync((HashId)serverId!, memberId, 0);
             var roles = await ctx.GetMemberRolesAsync((HashId)serverId!, memberId);
             using var db = _dbFactory.CreateDbContext();
-            var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString() && x.ServerId!.Equals(member.ServerId.ToString()));
+            var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString() && x.ServerId!.Equals(member.ServerId.ToString())).FirstOrDefault();
 
-            if (localMember.Count() > 0) return "error: member already exists in the database.";
-
+            if (localMember is not null) return Result<Member, string>.Err("failure")!;
+            if (user.IsBot) return Result<Member, string>.Err("failure")!;
             var newMember = new LocalServerMember
             {
                 Id = Guid.NewGuid(),
@@ -156,6 +156,15 @@ namespace MODiX.Services.Services
             
             return null; ;
 
+        }
+
+        public async Task<Result<Role, string>> GetMemberRoleNameAsync(Member member, uint roleId)
+        {
+            var serverId = member.ServerId;
+            var server = await member.ParentClient.GetServerAsync((HashId)serverId!);
+            var role = await server.ParentClient.GetRoleAsync(serverId, roleId);
+            if (role is null) return Result<Role, string>.Err("failure")!;
+            return role;
         }
     }
 }

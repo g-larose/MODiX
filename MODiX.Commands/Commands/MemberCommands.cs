@@ -69,8 +69,17 @@ namespace MODiX.Commands.Commands
                     var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                     var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
                     var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, author.Id, 0);
-                    
-                   // var servers = await memService.GetMemberServersAsync(serverId.ToString()!);
+                    var roles = new List<string>();
+                    foreach (var r in author.RoleIds)
+                    {
+                        var role = await memService.GetMemberRoleNameAsync(author, r);
+                        if (role.IsOk)
+                        {
+                            roles.Add(role.Value.Name);
+                        }
+                        
+                    }
+                    var roleString = string.Join(",", roles);
                     using var db = dbFactory.CreateDbContext();
                     var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
 
@@ -83,6 +92,7 @@ namespace MODiX.Commands.Commands
                         embed.AddField("Joined", author.JoinedAt.Humanize(), true);
                         embed.AddField("Created", author.CreatedAt.Humanize(), true);
                         embed.AddField("XP", xp, true);
+                        embed.AddField("Roles", roleString, true);
                         embed.AddField("Server", server.Name, true);
                         embed.SetFooter("MODiX watching everything ");
                         embed.SetTimestamp(DateTime.Now);
@@ -99,6 +109,7 @@ namespace MODiX.Commands.Commands
                         embed.AddField("Name", $"<@{author.Id}> ({author.Id})", false);
                         embed.AddField("Joined", author.JoinedAt.Humanize(), true);
                         embed.AddField("Created", author.CreatedAt.Humanize(), true);
+                        embed.AddField("Roles", roleString, true);
                         embed.AddField("XP", xp, true);
                         embed.AddField("Wallet", points, true);
                         embed.AddField("Warnings", warnings.ToString(), true);
@@ -117,18 +128,29 @@ namespace MODiX.Commands.Commands
                     var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                     var server = await invokator.ParentClient.GetServerAsync((HashId)serverId);
                     var xp = await invokator.ParentClient.AddXpAsync((HashId)serverId, user.Id, 0);
+                    var roles = new List<string>();
+                    foreach (var r in user.RoleIds)
+                    {
+                        var role = await memService.GetMemberRoleNameAsync(user, r);
+                        if (role.IsOk)
+                        {
+                            roles.Add(role.Value.Name);
+                        }
 
+                    }
+                    var roleString = string.Join(",", roles);
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(user.Id.ToString())).Include(x => x.Wallet).ToList();
 
                     if (localUser is null || localUser.Count < 1)
                     {
                         embed.SetTitle($"Profile for {user.Name}");
                         embed.SetDescription($"{user.Name} isn't in the database, run add command to add this member.");
                         embed.SetThumbnail(user.Avatar!.AbsoluteUri);
-                        embed.AddField("Name", $"<@{user.Id}> ({author.Id})", false);
+                        embed.AddField("Name", $"<@{user.Id}> ({user.Id})", false);
                         embed.AddField("Joined", user.JoinedAt.Humanize(), true);
                         embed.AddField("Created", user.CreatedAt.Humanize(), true);
+                        embed.AddField("Roles", roleString, true);
                         embed.AddField("XP", xp, true);
                         embed.AddField("Server", server.Name, true);
                         embed.SetFooter("MODiX watching everything ");
@@ -144,9 +166,10 @@ namespace MODiX.Commands.Commands
                         embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
                         if (user.Avatar.AbsoluteUri != "")
                             embed.SetThumbnail(user.Avatar!.AbsoluteUri);
-                        embed.AddField("Name", $"<@{user.Id}> ({author.Id})", false);
+                        embed.AddField("Name", $"<@{user.Id}> ({user.Id})", false);
                         embed.AddField("Joined", user.JoinedAt.Humanize(), true);
                         embed.AddField("Created", user.CreatedAt.Humanize(), true);
+                        embed.AddField("Roles", roleString, true);
                         embed.AddField("XP", xp, true);
                         embed.AddField("Wallet", points, true);
                         embed.AddField("Warnings", warnings.ToString(), true);

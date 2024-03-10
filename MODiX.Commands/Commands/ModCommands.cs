@@ -414,5 +414,58 @@ namespace MODiX.Commands.Commands
         }
 
         #endregion
+
+        #region RUN MATINENCE
+        [Command(Aliases = [ "mat", "matinence" ])]
+        [Description("runs matinence on the server.")]
+        public async Task Mantinence(CommandEvent invokator, string cmd)
+        {
+            var time = DateTime.Now.ToString(timePattern);
+            var date = DateTime.Now.ToShortDateString();
+            var db = dbFactory.CreateDbContext();
+            var serverId = invokator.ServerId;
+            var authorId = invokator.Message.CreatedBy;
+            var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
+            try
+            {
+               
+                if (cmd is not null || cmd != "")
+                {
+                    switch (cmd)
+                    {
+                        case "members":
+                        {
+                            var members = await server.ParentClient.GetMembersAsync((HashId)serverId!);
+                            foreach (var mem in members)
+                            {
+                                var dbUser = db.ServerMembers!.Where(x => x.UserId!.Equals(mem.Id)).FirstOrDefault();
+                                if (dbUser is not null) return;
+                                var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mem.Id);
+                                var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
+                                if (!result.IsOk)
+                                    await invokator.ReplyAsync($"{result.Error} : member already exists in database!");
+                                await Task.Delay(200);
+                            }
+                                await invokator.ReplyAsync("matinence complete, all server members have been added to the database!");
+                            break;
+                        }
+
+                    }
+                }
+                else
+                    await invokator.ReplyAsync("command not found, I cannot run matinence on the server until you tell me the command option to run. for help use help <command>");
+            }
+            catch(Exception e)
+            {
+                await invokator.ReplyAsync($"[{date}] [{time}] something went wrong, try agian later!");
+                Console.WriteLine($"[{date}] [{time}] [MODiX]   [ERROR] error: {e.Message} in [{server.Name}]");
+            }
+            
+            
+
+            
+
+        }
+        #endregion
     }
 }

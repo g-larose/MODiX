@@ -1,14 +1,18 @@
-﻿using System.Net.WebSockets;
+﻿using System.Drawing;
+using System.Net.WebSockets;
 using System.Reactive.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using Guilded;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
 using Guilded.Events;
+using Guilded.Servers;
 using Guilded.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using MODiX.Commands.Commands;
 using MODiX.Data;
 using MODiX.Data.Factories;
@@ -31,6 +35,7 @@ namespace MODiX
         DateTime lastJoinedAt;
         private IMessageHandler? msgHandler { get; set; }
         private readonly ModixDbContextFactory? _dbFactory = new();
+        private readonly ServerMemberService memService = new();
         public async Task RunAsync()
         {
             msgHandler = new MessageHandler();
@@ -46,7 +51,7 @@ namespace MODiX
                 .AddCommands(new TagCommands(), prefix!);
 
             client.Prepared
-                .Subscribe(async me =>
+                .Subscribe(me =>
                 {
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
@@ -77,8 +82,15 @@ namespace MODiX
                         embed.SetFooter("MODiX watching everything ");
                         embed.SetTimestamp(DateTime.Now);
                         await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, false, false, embed);
-                        using var memService = new ServerMemberService();
-                        var _ = await memService.AddServerMemberToDBAsync(memJoined.ParentClient, memJoined.Member);
+                        
+                        var result = await memService.AddServerMemberToDBAsync(memJoined.ParentClient, memJoined.Member);
+                        if (result.Error.Equals("failure"))
+                        {
+                            await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, "member already exists in the database");
+                        }
+                        else
+                            await memJoined.ParentClient.CreateMessageAsync(defaultChannelId, $"{memJoined.Name} added to database.");
+
                     }
                     catch(Exception e)
                     {
@@ -121,16 +133,18 @@ namespace MODiX
                     using var db = _dbFactory!.CreateDbContext();
                     if (msg.Message.CreatedBy == client.Id) return;
                     await msgHandler.HandleMessageAsync(msg.Message);
-                    var index = msg!.Content!.IndexOf(" ");
-                    
-                    if (index == -1) return;
+                    var index = 0;
+                    if (msg!.Content!.StartsWith("m?"))
+                    {
+                        index = msg!.Content!.IndexOf("?");
+                    }
                     var message = new LocalChannelMessage()
                     {
                         Id = Guid.NewGuid(),
                         ChannelId = msg.ChannelId,
                         ServerId = msg.ServerId.ToString(),
                         AuthorId = msg.CreatedBy.ToString(),
-                        MessageContent = msg.Content.Substring(index).Trim(),
+                        MessageContent = msg.Content!.Substring(index + 1).Trim(),
                         CreatedAt = msg.CreatedAt,
                     };
 
@@ -141,18 +155,40 @@ namespace MODiX
             client.MessageDeleted
                 .Subscribe(async msg =>
                 {
-                    if (msg.CreatedBy.Equals(client.Id)) return;
-                    var authorId = msg.CreatedBy;
-                    var serverID = msg.ServerId;
-                    var author = await msg.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
-                    var server = await msg.ParentClient.GetServerAsync((HashId)serverID!);
-                    var channelId = msg.ChannelId;
-                    var channel = await msg.ParentClient.GetChannelAsync((Guid)channelId!);
-                    //TODO: handle deleted messages.
                     var time = DateTime.Now.ToString(timePattern);
                     var date = DateTime.Now.ToShortDateString();
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] [{author.Name}] deleted msg [{msg.Content}] from {server.Name} in channel [{channel.Name}]");
+                    try
+                    {
+                        if (msg.CreatedBy.Equals(client.Id)) return;
+                        var authorId = msg.CreatedBy;
+                        var serverID = msg.ServerId;
+                        var author = await msg.ParentClient.GetMemberAsync((HashId)serverID!, authorId);
+                        var server = await msg.ParentClient.GetServerAsync((HashId)serverID!);
+                        var channelId = msg.ChannelId;
+                        var channel = await msg.ParentClient.GetChannelAsync((Guid)channelId!);
+                        var mentioned = msg.Mentions?.Users?.Any();
+                        if (mentioned is true)
+                        {
+                            var embed = new Embed();
+                            embed.SetTitle("Ghost Ping Detected");
+                            embed.SetDescription($"[{date}] [{time}] <@{authorId}> ghost ping has been logged.\r\n[message]: {msg.Content}");
+                            embed.SetFooter("MODiX watching everyone ");
+                            embed.SetTimestamp(DateTime.Now);
+                            embed.SetColor(EmbedColorService.GetColor("darkred", Color.DarkRed));
+                            await msg.ParentClient.CreateMessageAsync(channelId, embed);
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] Ghost ping detected - [{author.Name}] deleted msg [{msg.Content}] from {server.Name} in channel [{channel.Name}]");
+                            return;
+                        }
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] [{author.Name}] deleted msg [{msg.Content}] from {server.Name} in channel [{channel.Name}]");
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine($"[{date}][{time}][ERROR]  [MODiX] Error: {e.Message}");
+                        return;
+                    }
+                    
 
                 });
 
@@ -188,18 +224,48 @@ namespace MODiX
                      {
                          foreach (var mem in members)
                          {
-                            
+                             //TODO: add member to db.
+                             var m = await server.ParentClient.GetMemberAsync((HashId)serverId, mem.Id);
+                             var result = await memService.AddServerMemberToDBAsync(server.ParentClient, m);
                          }
 
                      }
                      else
                      {
                           Console.WriteLine($"[{date}][{time}][INFO]  [MODiX]  no members to add to database");
-                     }
-                    
-                     
+                     }                   
                  });
-                 
+
+            client.MemberUpdated
+                .Subscribe(async memUpdated =>
+                {
+                    using var db = _dbFactory?.CreateDbContext();
+                    var user = db!.ServerMembers!.Where(x => x.UserId!.Equals(memUpdated.Id)).FirstOrDefault();
+                    var mem = await memUpdated.ParentClient.GetMemberAsync((HashId)memUpdated.ServerId, memUpdated.Id);
+                    var server = await memUpdated.ParentClient.GetServerAsync((HashId)memUpdated.ServerId);
+                    var defaultChannelId = server.DefaultChannelId;
+                    await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"{mem.Name} changed their nickname to : {memUpdated.UserInfo.Nickname}");
+                    if (user is not null)
+                    {
+                        user.Nicknames!.Add(memUpdated.UserInfo.Nickname!);
+                        db.Update(user);
+                        await db.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        await memService.AddServerMemberToDBAsync(memUpdated.ParentClient, mem);
+                        var result = await memService.AddServerMemberToDBAsync(memUpdated.ParentClient, mem);
+                        if (result.IsOk)
+                        {
+                            await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"added {mem.Name}'s new nickname to the database!");
+                        } 
+                        else
+                            await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"something went wrong adding {mem.Name}'s new nickname to the database!");
+                    }
+
+                });
+
+            
 
             await client.ConnectAsync();
             await client.SetStatusAsync("Watching Everything", 90002579);

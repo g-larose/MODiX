@@ -12,6 +12,7 @@ namespace MODiX.Services.Interfaces
         Task<IList<MemberSummary>> GetServerMembersAsync(AbstractGuildedClient client, HashId serverId);
         Task<LocalServerMember> GetServerMemberAsync(HashId memberId);
         Task<string[]> GetMembersPermissions(Member member);
+        Task<Result<Role, string>> GetMemberRoleNameAsync(Member member, uint roleId);
         Task<Server[]> GetMemberServersAsync(string userId);
         Task<Result<Member, string>> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member);
         Task<Result<Member, string>> AddWarningAsync(string memberId);
@@ -20,6 +21,7 @@ namespace MODiX.Services.Interfaces
         Task<bool> UnBanMemberAsync(HashId memberId);
         Task<bool> MuteMemberAsync(HashId memberId);
         Task<bool> UnMuteMemberAsync(HashId memberId);
+
 
     }
 }
