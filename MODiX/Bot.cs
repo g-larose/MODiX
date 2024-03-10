@@ -147,7 +147,9 @@ namespace MODiX
                         MessageContent = msg.Content!.Substring(index + 1).Trim(),
                         CreatedAt = msg.CreatedAt,
                     };
-
+                    var member = await msg.ParentClient.GetMemberAsync((HashId)msg.ServerId!, msg.CreatedBy);
+                    var xp = await member.User.AddXpAsync((HashId)member.ServerId!, 0);
+                    await msg.ParentClient.SetXpAsync((HashId)msg.ServerId!, msg.CreatedBy, (xp + 1));
                     db.Add(message);
                     db.SaveChanges();
                 });

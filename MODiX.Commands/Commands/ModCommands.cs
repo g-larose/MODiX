@@ -276,55 +276,71 @@ namespace MODiX.Commands.Commands
             var serverId = invokator.Message.ServerId;
             var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
             var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, authorId);
-
-            if (permissions.Contains(Permission.ManageMessages))
+            
+            try
             {
-                var channelId = invokator.ChannelId;
-                var channel = await invokator.ParentClient.GetChannelAsync(channelId);
-               
-                if (amount <= 100)
+                if (permissions.Contains(Permission.ManageChannels))
                 {
-                    var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount); // here we can specify a before date. Im thinking about it
-                    foreach (var m in messages)
+                    var channelId = invokator.ChannelId;
+                    var channel = await invokator.ParentClient.GetChannelAsync(channelId);
+
+                    if (amount <= 100)
                     {
-                        await m.DeleteAsync();
-                        await Task.Delay(100);
+                        var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount); // here we can specify a before date. Im thinking about it
+                        foreach (var m in messages)
+                        {
+                            await m.DeleteAsync();
+                            await Task.Delay(100);
+                        }
+
+                        var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
+                        var date = DateTime.Now.ToShortDateString();
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        var embed = new Embed()
+                        {
+                            Description = $"{amount} messages deleted",
+                            Color = EmbedColorService.GetColor("orange", Color.Orange),
+                            Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
+                            Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
+                            Timestamp = DateTime.Now
+                        };
+                        var deleteMessage = await invokator.CreateMessageAsync(embed);
+                    }
+                    else
+                    {
+                        var embed = new Embed()
+                        {
+                            Description = $"<@{author.Id}> to many messages, the limit is 100. to set limit run command **purge setlimit amount**",
+                            Color = EmbedColorService.GetColor("orange", Color.Orange),
+                            //Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
+                            Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
+                            Timestamp = DateTime.Now
+                        };
+                        await invokator.ReplyAsync(embed);
                     }
 
-                    var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
-                    var date = DateTime.Now.ToShortDateString();
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    var embed = new Embed()
-                    {
-                        Description = $"{amount} messages deleted",
-                        Color = EmbedColorService.GetColor("orange", Color.Orange),
-                        Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
-                        Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
-                        Timestamp = DateTime.Now
-                    };
-                    var deleteMessage = await invokator.CreateMessageAsync(embed);
+
                 }
                 else
                 {
-                    var embed = new Embed()
-                    {
-                        Description = $"<@{author.Id}> to many messages, the limit is 100. to set limit run command **purge setlimit amount**",
-                        Color = EmbedColorService.GetColor("orange", Color.Orange),
-                        //Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
-                        Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
-                        Timestamp = DateTime.Now
-                    };
-                    await invokator.ReplyAsync(embed);
+                    var newEmbed = new Embed();
+                    newEmbed.SetTitle($"<@{author.Id}> you do not have the permission to manage channels, command ignored!");
+                    newEmbed.SetFooter("MODiX watching everything ");
+                    newEmbed.SetTimestamp(DateTime.Now);
+                    await invokator.ReplyAsync(newEmbed);
                 }
-                   
-                
             }
-            else
+            catch(Exception e)
             {
-                await invokator.ReplyAsync($"<@{author.Id}> you do not have the permission to manage messages, command ignored!");
+                var newEmbed = new Embed();
+                newEmbed.SetTitle($"<@{author.Id}> you do not have the permission to manage channels, command ignored!");
+                newEmbed.SetFooter("MODiX watching everything ");
+                newEmbed.SetTimestamp(DateTime.Now);
+                await invokator.ReplyAsync(newEmbed);
             }
+            
         }
         #endregion
 
@@ -442,8 +458,13 @@ namespace MODiX.Commands.Commands
                                 if (dbUser is not null) return;
                                 var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mem.Id);
                                 var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
+                                    await invokator.ReplyAsync("member matinence has been started.");
                                 if (!result.IsOk)
-                                    await invokator.ReplyAsync($"{result.Error} : member already exists in database!");
+                                {
+                                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                                    Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] member: {user.Name} already exists in db. [{server.Name}]");
+                                }
+                                   
                                 await Task.Delay(200);
                             }
                                 await invokator.ReplyAsync("matinence complete, all server members have been added to the database!");

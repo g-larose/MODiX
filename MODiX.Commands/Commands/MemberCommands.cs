@@ -55,6 +55,7 @@ namespace MODiX.Commands.Commands
             await ctx.CreateMessageAsync(embed);
         }
 
+        #region PROFILE
         [Command(Aliases = new string[] { "profile" })]
         [Description("gets the triggering users member info")]
         public async Task Profile(CommandEvent invokator, string mentions = "")
@@ -190,6 +191,7 @@ namespace MODiX.Commands.Commands
             }
             
         }
+        #endregion
 
         [Command(Aliases = new string[] { "help" })]
         [Description("list of bot commands")]
@@ -360,6 +362,7 @@ namespace MODiX.Commands.Commands
 
             var embed = new Embed();
             embed.SetTitle($"{server.Name} Info");
+            embed.SetThumbnail(new EmbedMedia(server.Avatar!.AbsoluteUri));
             embed.AddField("Server Name", server.Name, true);
             embed.AddField("Created", server.CreatedAt.Humanize(), true);
             embed.AddField("Owner", owner.Name, true);
