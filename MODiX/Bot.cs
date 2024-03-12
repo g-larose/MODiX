@@ -48,7 +48,8 @@ namespace MODiX
                 .AddCommands(new BlackjackCommands(), prefix!)
                 .AddCommands(new EconomyCommands(), prefix!)
                 .AddCommands(new DiceCommands(), prefix!)
-                .AddCommands(new TagCommands(), prefix!);
+                .AddCommands(new TagCommands(), prefix!)
+                .AddCommands(new SupportCommands(), prefix!);
 
             client.Prepared
                 .Subscribe(me =>
@@ -95,7 +96,7 @@ namespace MODiX
                     catch(Exception e)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkRed;
-                        Console.WriteLine($"[{date}][{time}][ERROR]  [{e.Message}] in server: {server.Name}.");
+                        Console.WriteLine($"[{date}][{time}][ERROR]  [{e.Message}] in server: {server.Name} [MemberJoined] event");
                     }
                    
 
@@ -136,7 +137,7 @@ namespace MODiX
                     var index = 0;
                     if (msg!.Content!.StartsWith("m?"))
                     {
-                        index = msg!.Content!.IndexOf("?");
+                        index = msg!.Content!.IndexOf(' ') + 1;
                     }
                     var message = new LocalChannelMessage()
                     {
@@ -144,14 +145,25 @@ namespace MODiX
                         ChannelId = msg.ChannelId,
                         ServerId = msg.ServerId.ToString(),
                         AuthorId = msg.CreatedBy.ToString(),
-                        MessageContent = msg.Content!.Substring(index + 1).Trim(),
+                        MessageContent = msg.Content!.Substring(index).Trim(),
                         CreatedAt = msg.CreatedAt,
                     };
-                    var member = await msg.ParentClient.GetMemberAsync((HashId)msg.ServerId!, msg.CreatedBy);
-                    var xp = await member.User.AddXpAsync((HashId)member.ServerId!, 0);
-                    await msg.ParentClient.SetXpAsync((HashId)msg.ServerId!, msg.CreatedBy, (xp + 1));
-                    db.Add(message);
-                    db.SaveChanges();
+                    try
+                    {
+                        var member = await msg.ParentClient.GetMemberAsync((HashId)msg.ServerId!, msg.CreatedBy);
+                        var xp = await member.User.AddXpAsync((HashId)member.ServerId!, 0);
+                        await msg.ParentClient.SetXpAsync((HashId)msg.ServerId!, msg.CreatedBy, (xp + 1));
+                        db.Messages!.Add(message);
+                        await db.SaveChangesAsync();
+                    }
+                    catch(Exception e)
+                    {
+                        var time = DateTime.Now.ToString(timePattern);
+                        var date = DateTime.Now.ToShortDateString();
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] {e.Message} [MessageCreated] event");
+                    }
+                   
                 });
 
             client.MessageDeleted
@@ -187,7 +199,7 @@ namespace MODiX
                     }
                     catch(Exception e)
                     {
-                        Console.WriteLine($"[{date}][{time}][ERROR]  [MODiX] Error: {e.Message}");
+                        Console.WriteLine($"[{date}][{time}][ERROR]  [MODiX] Error: {e.Message} [MessageDeleted] event");
                         return;
                     }
                     
@@ -227,8 +239,17 @@ namespace MODiX
                          foreach (var mem in members)
                          {
                              //TODO: add member to db.
-                             var m = await server.ParentClient.GetMemberAsync((HashId)serverId, mem.Id);
-                             var result = await memService.AddServerMemberToDBAsync(server.ParentClient, m);
+                             try
+                             {
+                                 var m = await server.ParentClient.GetMemberAsync((HashId)serverId, mem.Id);
+                                 var result = await memService.AddServerMemberToDBAsync(server.ParentClient, m);
+                             }
+                             catch(Exception e)
+                             {
+                                 Console.WriteLine($"[{date}][{time}][ERROR]  [MODiX]  {e.Message} [ServerAdded] event");
+                                 continue;
+                             }
+                             
                          }
 
                      }
@@ -241,33 +262,43 @@ namespace MODiX
             client.MemberUpdated
                 .Subscribe(async memUpdated =>
                 {
-                    using var db = _dbFactory?.CreateDbContext();
-                    var user = db!.ServerMembers!.Where(x => x.UserId!.Equals(memUpdated.Id)).FirstOrDefault();
-                    var mem = await memUpdated.ParentClient.GetMemberAsync((HashId)memUpdated.ServerId, memUpdated.Id);
-                    var server = await memUpdated.ParentClient.GetServerAsync((HashId)memUpdated.ServerId);
-                    var defaultChannelId = server.DefaultChannelId;
-                    await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"{mem.Name} changed their nickname to : {memUpdated.UserInfo.Nickname}");
-                    if (user is not null)
+                    try
                     {
-                        user.Nicknames!.Add(memUpdated.UserInfo.Nickname!);
-                        db.Update(user);
-                        await db.SaveChangesAsync();
-                    }
-                    else
-                    {
-                        await memService.AddServerMemberToDBAsync(memUpdated.ParentClient, mem);
-                        var result = await memService.AddServerMemberToDBAsync(memUpdated.ParentClient, mem);
-                        if (result.IsOk)
+                        using var db = _dbFactory?.CreateDbContext();
+                        var user = db!.ServerMembers!.Where(x => x.UserId!.Equals(memUpdated.Id)).FirstOrDefault();
+                        var mem = await memUpdated.ParentClient.GetMemberAsync((HashId)memUpdated.ServerId, memUpdated.Id);
+                        var server = await memUpdated.ParentClient.GetServerAsync((HashId)memUpdated.ServerId);
+                        var defaultChannelId = server.DefaultChannelId;
+                        await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"{mem.Name} changed their nickname to : {memUpdated.UserInfo.Nickname}");
+                        if (user is not null)
                         {
-                            await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"added {mem.Name}'s new nickname to the database!");
-                        } 
+                            user.Nicknames!.Add(memUpdated.UserInfo.Nickname!);
+                            db.Update(user);
+                            await db.SaveChangesAsync();
+                        }
                         else
-                            await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"something went wrong adding {mem.Name}'s new nickname to the database!");
+                        {
+                            await memService.AddServerMemberToDBAsync(memUpdated.ParentClient, mem);
+                            var result = await memService.AddServerMemberToDBAsync(memUpdated.ParentClient, mem);
+                            if (result.IsOk)
+                            {
+                                await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"added {mem.Name}'s new nickname to the database!");
+                            }
+                            else
+                                await memUpdated.ParentClient.CreateMessageAsync((Guid)defaultChannelId!, $"something went wrong adding {mem.Name}'s new nickname to the database!");
+                        }
                     }
+                    catch (Exception e)
+                    {
+                        var time = DateTime.Now.ToString(timePattern);
+                        var date = DateTime.Now.ToShortDateString();
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] {e.Message} [MemberUpdated] event");
+                    }
+                   
 
                 });
 
-            
 
             await client.ConnectAsync();
             await client.SetStatusAsync("Watching Everything", 90002579);

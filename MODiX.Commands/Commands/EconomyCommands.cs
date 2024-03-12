@@ -1,6 +1,9 @@
-﻿using Guilded.Base.Embeds;
+﻿using Guilded.Base;
+using Guilded.Base.Embeds;
 using Guilded.Commands;
 using Humanizer;
+using MODiX.Data;
+using MODiX.Data.Factories;
 using MODiX.Data.Models;
 using MODiX.Services.Features.Economy;
 using MODiX.Services.Interfaces;
@@ -17,6 +20,7 @@ namespace MODiX.Commands.Commands
     {
         private Wallet wallet { get; set; } = new();
         private BotTimerService timer = new();
+        private ModixDbContextFactory _dbFactory = new();
         [Command(Aliases = [ "daily" ] )]
         [Description("get member's daily economy points")]
         public async Task Daily(CommandEvent invokator)
@@ -29,6 +33,39 @@ namespace MODiX.Commands.Commands
             await invokator.ReplyAsync($"you finished daily task and received ⭐{points}⭐ points => {interval}");
 
             
+        }
+
+        [Command(Aliases = [ "chores" ])]
+        [Description("get the chores value")]
+        public async Task Chores(CommandEvent invokator)
+        {
+            using EconomyGameService gameService = new();
+            var chores = new string[] { "washing the dishes", "sweeping", "taking the garbage out", "cleaning your room", "feeding the dog", "mowing the grass" };
+            var result = gameService.GetChores();
+            if (result.IsOk)
+            {
+                try
+                {
+                    var rnd = new Random();
+                    var index = rnd.Next(0, chores.Length - 1);
+                    var chore = chores[index];
+                    var serverId = invokator.Message.ServerId;
+                    var memberId = invokator.Message.CreatedBy;
+                    var member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
+                    using var db = _dbFactory.CreateDbContext();
+                    var localMember = db.ServerMembers!.Where(x => x.UserId! == member.Id.ToString()).FirstOrDefault();
+                    await invokator.ReplyAsync($"you finished {chore} and received {result.Value} points");
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine($"{result.Error}");
+                }
+                
+            }
+            else
+            {
+                await invokator.ReplyAsync($"I encountered an error while fetching the chores, command reset!");
+            }
         }
 
         [Command(Aliases = [ "balance" ])]

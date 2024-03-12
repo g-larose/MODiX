@@ -22,6 +22,7 @@ namespace MODiX.Services.Services
         private uint MessageCount { get; set; }
 
         private string? timePattern = "hh:mm:ss tt";
+
         public async Task HandleMessageAsync(Message message)
         {
             var authorId = message.CreatedBy;
@@ -60,6 +61,8 @@ namespace MODiX.Services.Services
                     MessageAuthor = author.Name;
                     Message = message.Content;
                 }
+
+
                 //var pattern = @"https?://\S+|guilded.gg|www\S+|http?://\S+";
                 var pattern = @"(?:https?|ftp):\/\/(?:[\w-]+\.)+[\w-]+(?:\/[\w@?^=%&/~+#-]*)?|guilded\.gg|discord\.gg";
                 var regex = new Regex(pattern);
@@ -83,7 +86,7 @@ namespace MODiX.Services.Services
                 var time = DateTime.Now.ToString(timePattern);
                 var date = DateTime.Now.ToShortDateString();
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine($"[{date}][{time}][ERROR]  [{message.ParentClient.Name}] {e.Message}");
+                Console.WriteLine($"[{date}][{time}][ERROR]  [{message.ParentClient.Name}] {e.Message} [MessageHandler event]");
             }
             
         }

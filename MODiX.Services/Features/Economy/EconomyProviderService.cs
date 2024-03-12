@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MODiX.Services.Features.Economy
 {
-    public class EconomyProviderService : IEconomyProvider, IDisposable
+    public class EconomyProviderService : IDisposable
     {
 
         public void Dispose()

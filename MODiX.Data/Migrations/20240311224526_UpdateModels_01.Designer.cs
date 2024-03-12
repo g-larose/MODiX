@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using MODiX.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    partial class ModixDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240311224526_UpdateModels_01")]
+    partial class UpdateModels_01
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,6 +25,44 @@ namespace MODiX.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("MODiX.Data.Models.Backpack", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MemberId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Backpack");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.Bank", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<double>("AccountTotal")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("MemberId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Bank");
+                });
 
             modelBuilder.Entity("MODiX.Data.Models.Command", b =>
                 {
@@ -47,6 +88,31 @@ namespace MODiX.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Commands");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.Item", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BackpackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("Cost")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BackpackId");
+
+                    b.ToTable("Item");
                 });
 
             modelBuilder.Entity("MODiX.Data.Models.LocalChannelMessage", b =>
@@ -86,6 +152,12 @@ namespace MODiX.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BackpackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BankId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -118,6 +190,11 @@ namespace MODiX.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BackpackId");
+
+                    b.HasIndex("BankId")
+                        .IsUnique();
 
                     b.HasIndex("WalletId");
 
@@ -199,6 +276,13 @@ namespace MODiX.Data.Migrations
                     b.ToTable("Wallet");
                 });
 
+            modelBuilder.Entity("MODiX.Data.Models.Item", b =>
+                {
+                    b.HasOne("MODiX.Data.Models.Backpack", null)
+                        .WithMany("Items")
+                        .HasForeignKey("BackpackId");
+                });
+
             modelBuilder.Entity("MODiX.Data.Models.LocalChannelMessage", b =>
                 {
                     b.HasOne("MODiX.Data.Models.LocalServerMember", null)
@@ -208,9 +292,21 @@ namespace MODiX.Data.Migrations
 
             modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>
                 {
+                    b.HasOne("MODiX.Data.Models.Backpack", "Backpack")
+                        .WithMany()
+                        .HasForeignKey("BackpackId");
+
+                    b.HasOne("MODiX.Data.Models.Bank", "Bank")
+                        .WithOne("Member")
+                        .HasForeignKey("MODiX.Data.Models.LocalServerMember", "BankId");
+
                     b.HasOne("MODiX.Data.Models.Wallet", "Wallet")
                         .WithMany()
                         .HasForeignKey("WalletId");
+
+                    b.Navigation("Backpack");
+
+                    b.Navigation("Bank");
 
                     b.Navigation("Wallet");
                 });
@@ -233,6 +329,16 @@ namespace MODiX.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.Backpack", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.Bank", b =>
+                {
+                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>

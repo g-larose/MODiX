@@ -27,7 +27,7 @@ namespace MODiX.Commands.Commands
         {
             try
             {
-                 var db = dbFactory.CreateDbContext();
+                var db = dbFactory.CreateDbContext();
                 var embed = new Embed();
                 var authorId = invokator.Message.CreatedBy;
                 var serverID = invokator.Message.ServerId;
@@ -47,8 +47,9 @@ namespace MODiX.Commands.Commands
                     var _userId = invokator!.Mentions!.Users!.First().Id;
                     var _user = await invokator.ParentClient.GetMemberAsync((HashId)serverID!, _userId);
                     var userXp = await invokator.ParentClient.AddXpAsync((HashId)serverID!, _userId, -150);
-                    var warnedUser = db.ServerMembers!.Where(x => x.Nickname == _user.Name)
-                        .Select(x => x).FirstOrDefault();
+                    var warnedUser = db.ServerMembers!.Where(x => x.UserId.Equals(_user.Id))
+                        .Select(x => x)
+                        .FirstOrDefault();
 
                     if (warnedUser is not null)
                     {
@@ -66,6 +67,7 @@ namespace MODiX.Commands.Commands
                             embed.AddField(new EmbedField("Issued To:", $"{_user.Name}", true));
                             embed.AddField(new EmbedField("Reason:", $"{args}", false));
                             embed.AddField(new EmbedField("Warnings:", $"{warnedUser!.Warnings}", false));
+                            await invokator.ReplyAsync(embed);
                             db.Update(warnedUser);
                             await db.SaveChangesAsync();
                         }
@@ -93,8 +95,8 @@ namespace MODiX.Commands.Commands
                         embed.AddField(new EmbedField("Issued To:", $"{_user.Name}", false));
                         embed.AddField(new EmbedField("Reason:", $"{args}", false));
                         embed.AddField(new EmbedField("Warnings:", $"{newUser.Warnings}", false));
-
-                        await invokator.DeleteAsync();
+                        
+                        //await invokator.DeleteAsync();
                         await invokator.CreateMessageAsync(embed);
                     } 
                 }
@@ -104,7 +106,7 @@ namespace MODiX.Commands.Commands
                     embed.SetDescription(
                         $"<@{author.Id}> you do not have the permissions to execute this command, command ignored!");
 
-                    await invokator.Message.DeleteAsync();
+                    //await invokator.Message.DeleteAsync();
                     await invokator.ReplyAsync(embed);
                 }
             }

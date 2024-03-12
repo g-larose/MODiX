@@ -20,7 +20,7 @@ namespace MODiX.Data.Models
         public List<LocalChannelMessage>? Messages { get; set; }
         public List<string>? Nicknames { get; set; } = new();
         public Wallet? Wallet { get; set; }
-        public Backpack? Backpack { get; set; }
+        public Guid? WalletId { get; set; }
 
     }
 }

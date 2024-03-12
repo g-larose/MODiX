@@ -10,6 +10,7 @@ namespace MODiX.Data.Models
     {
         public Guid Id { get; set; }
         public string MemberId { get; set; } = string.Empty;
+        public string? ServerId { get; set; }
         public int Points { get; set; }
     }
 }
