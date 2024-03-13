@@ -58,13 +58,13 @@ namespace MODiX.Commands.Commands
                 }
                 catch(Exception e)
                 {
-                    Console.WriteLine($"{result.Error}");
+                    Console.WriteLine("I encountered an error while fetching the chores, command reset!");
                 }
                 
             }
             else
             {
-                await invokator.ReplyAsync($"I encountered an error while fetching the chores, command reset!");
+                await invokator.ReplyAsync($"{result.Error}");
             }
         }
 

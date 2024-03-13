@@ -25,6 +25,8 @@ namespace MODiX.Commands.Commands
         private MusicPlayerProvider player = new();
         private static string? timePattern = "hh:mm:ss tt";
 
+
+        #region UPTIME
         [Command(Aliases = new string[] { "alive", "uptime", "online" })]
         [Description("returns how long the bot has been online since the last restart")]
         public async Task Uptime(CommandEvent ctx)
@@ -54,6 +56,7 @@ namespace MODiX.Commands.Commands
 
             await ctx.CreateMessageAsync(embed);
         }
+        #endregion
 
         #region PROFILE
         [Command(Aliases = new string[] { "profile" })]
@@ -193,6 +196,7 @@ namespace MODiX.Commands.Commands
         }
         #endregion
 
+        #region HELP
         [Command(Aliases = new string[] { "help" })]
         [Description("list of bot commands")]
         public async Task Help(CommandEvent invokator)
@@ -228,8 +232,9 @@ namespace MODiX.Commands.Commands
 
             
         }
+        #endregion
 
-
+        #region BOT INFO
         [Command(Aliases = new string[] { "botinfo", "binfo" })]
         [Description("list the bot info")]
         public async Task BotInfo(CommandEvent invokator)
@@ -259,6 +264,7 @@ namespace MODiX.Commands.Commands
 
                 var embed = new Embed();
                 embed.SetTitle($"{botName} Info");
+                embed.SetDescription("[Join MODiX LAbs](https://www.guilded.gg/i/kaBnGo9p)");
                 embed.AddField("Creator", $"<@mq1ezklm>", false);
                 embed.AddField("Server Id", $"`{serverId}`", true);
                 embed.AddField("Bot Id", $"`{botId}`", true);
@@ -286,8 +292,10 @@ namespace MODiX.Commands.Commands
             }
             
         }
+        #endregion
 
         //test command for playing youtube music...doesn't work yet
+        #region PLAY AUDIO
         [Command("play")]
         [Description("play a youtube song")]
         public async Task PlayAudio(CommandEvent invokator)
@@ -308,7 +316,9 @@ namespace MODiX.Commands.Commands
            embed.SetTimestamp(DateTime.Now);
            await invokator.ReplyAsync(embed);
         }
+        #endregion
 
+        #region WELCOME MEMBER
         [Command(Aliases = new string[] { "welcome" })]
         [Description("says a random welcome message")]
         public async Task Welcome(CommandEvent invokator, string userToWelcome = "")
@@ -341,7 +351,9 @@ namespace MODiX.Commands.Commands
             }
             
         }
+        #endregion
 
+        #region SERVER INFO
         [Command(Aliases = new[] { "serverinfo" })]
         [Description("get the server info")]
         public async Task ServerInfo(CommandEvent invokator)
@@ -373,6 +385,9 @@ namespace MODiX.Commands.Commands
             await invokator.ReplyAsync(embed);
             ServerMemberService.Dispose();
         }
+        #endregion
+
+        #region 8BALL
 
         [Command(Aliases = new[] { "8ball" })]
         [Description("ask 8ball a question, get a response message")]
@@ -401,7 +416,9 @@ namespace MODiX.Commands.Commands
             }
             
         }
+        #endregion
 
+        #region PING
         [Command(Aliases = new string[] { "ping" })]
         [Description("get a ping , pong response with how long it took in ms")]
         public async Task Ping(CommandEvent invokator)
@@ -412,7 +429,7 @@ namespace MODiX.Commands.Commands
             timer.Stop();
             await reply.UpdateAsync($"Pong....took {timer.ElapsedMilliseconds}ms");
         }
+        #endregion
 
-       
     }
 }
