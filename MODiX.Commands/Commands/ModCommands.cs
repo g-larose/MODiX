@@ -8,6 +8,7 @@ using Guilded.Permissions;
 using Guilded.Users;
 using Microsoft.EntityFrameworkCore;
 using MODiX.Data;
+using MODiX.Data.Enums;
 using MODiX.Data.Factories;
 using MODiX.Data.Models;
 using MODiX.Services.Services;
@@ -417,9 +418,9 @@ namespace MODiX.Commands.Commands
                 if (result.IsOk)
                 {
                     var db = dbFactory.CreateDbContext();
-                    var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString()).Include(x => x.Wallet).ToList();
+                    var newMem = db.ServerMembers!.Where(x => x.UserId == memberId.ToString()).ToList();
                     timer.Stop();
-                    await invokator.ReplyAsync($"member {user.Name} has been added to the db with [{newMem.First()!.Wallet!.Points}] points added to their wallet, command took... **{timer.ElapsedMilliseconds}**ms to execute");
+                    await invokator.ReplyAsync($"member {user.Name} has been added to the db, command took... **{timer.ElapsedMilliseconds}**ms to execute");
                 }
                 else
                 {
@@ -434,7 +435,7 @@ namespace MODiX.Commands.Commands
         #endregion
 
         #region RUN MATINENCE
-        [Command(Aliases = [ "mat", "matinence" ])]
+        [Command(Aliases = [ "mat", "matinence", "clean" ])]
         [Description("runs matinence on the server.")]
         public async Task Mantinence(CommandEvent invokator, string cmd)
         {
@@ -454,22 +455,35 @@ namespace MODiX.Commands.Commands
                         case "members":
                         {
                             var members = await server.ParentClient.GetMembersAsync((HashId)serverId!);
+                            await invokator.ReplyAsync("member matinence has been started.");
                             foreach (var mem in members)
                             {
-                                var dbUser = db.ServerMembers!.Where(x => x.UserId!.Equals(mem.Id)).FirstOrDefault();
-                                if (dbUser is not null) return;
+                                var dbUser = db.ServerMembers!.Where(x => x.UserId!.Equals(mem.Id.ToString())).FirstOrDefault();
+                                if (dbUser is not null) continue;
                                 var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mem.Id);
                                 var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
-                                    await invokator.ReplyAsync("member matinence has been started.");
-                                if (!result.IsOk)
+                                    
+                                if (!result.IsOk && result.Error != "isBot")
                                 {
+                                    var log = new Log
+                                    {
+                                        ServerId = serverId.ToString(),
+                                        ChannelId = invokator.Message.ChannelId.ToString(),
+                                        Type = LogType.ERROR,
+                                        Timestamp = DateTime.Now.ToLongDateString(),
+                                        Content = $"{result.Error}"
+                                    };
+
+                                    await invokator.ReplyAsync($"[{date}] [{time}] [ERROR]: {result.Error} please refer {log.Id} to a mod.");
+                                    Console.WriteLine($"[{date}] [{time}] [MODiX]   [ERROR] error: {result.Error} in [{server.Name}]");
                                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                                     Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] member: {user.Name} already exists in db. [{server.Name}]");
                                 }
                                    
-                                await Task.Delay(200);
+                                await Task.Delay(100);
                             }
-                                await invokator.ReplyAsync("matinence complete, all server members have been added to the database!");
+
+                            await invokator.ReplyAsync("matinence complete, all server members have been added to the database!");
                             break;
                         }
 
@@ -480,8 +494,19 @@ namespace MODiX.Commands.Commands
             }
             catch(Exception e)
             {
+                var log = new Log
+                {
+                    ServerId = serverId.ToString(),
+                    ChannelId = invokator.Message.ChannelId.ToString(),
+                    Type = LogType.ERROR,
+                    Timestamp = DateTime.Now.ToLongDateString(),
+                    Content = $"{e.Message}"
+                };
+
                 await invokator.ReplyAsync($"[{date}] [{time}] something went wrong, try agian later!");
+                Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine($"[{date}] [{time}] [MODiX]   [ERROR] error: {e.Message} in [{server.Name}]");
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
             }
             
             

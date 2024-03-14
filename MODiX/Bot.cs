@@ -123,8 +123,7 @@ namespace MODiX
                     var date = DateTime.Now.ToShortDateString();
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] reconnected to gateway...");
-                    Console.ForegroundColor = ConsoleColor.DarkGreen;
-                    Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] listening for events...");
+
                 });
 
             client.MessageCreated

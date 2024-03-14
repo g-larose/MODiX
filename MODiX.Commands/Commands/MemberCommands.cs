@@ -85,7 +85,7 @@ namespace MODiX.Commands.Commands
                     }
                     var roleString = string.Join(",", roles);
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).Include(x => x.Wallet).ToList();
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).ToList();
 
                     if (localUser is null || localUser.Count < 1)
                     {
@@ -106,7 +106,6 @@ namespace MODiX.Commands.Commands
                     else
                     {
                         var warnings = localUser.Select(x => x.Warnings).First();
-                        var points = localUser?.First()!.Wallet!.Points.ToWords();
                         embed = new Embed();
                         embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
                         embed.SetThumbnail(author.Avatar!.AbsoluteUri);
@@ -115,7 +114,6 @@ namespace MODiX.Commands.Commands
                         embed.AddField("Created", author.CreatedAt.Humanize(), true);
                         embed.AddField("Roles", roleString, true);
                         embed.AddField("XP", xp, true);
-                        embed.AddField("Wallet", points, true);
                         embed.AddField("Warnings", warnings.ToString(), true);
                         embed.AddField("Server", server.Name, true);
                         embed.SetFooter("MODiX watching everything ");
@@ -144,7 +142,7 @@ namespace MODiX.Commands.Commands
                     }
                     var roleString = string.Join(",", roles);
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(user.Id.ToString())).Include(x => x.Wallet).ToList();
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(user.Id.ToString())).ToList();
 
                     if (localUser is null || localUser.Count < 1)
                     {
@@ -165,7 +163,6 @@ namespace MODiX.Commands.Commands
                     else
                     {
                         var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
-                        var points = localUser?.FirstOrDefault()!.Wallet!.Points.ToWords();
                         embed = new Embed();
                         embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
                         if (user.Avatar.AbsoluteUri != "")
@@ -175,7 +172,6 @@ namespace MODiX.Commands.Commands
                         embed.AddField("Created", user.CreatedAt.Humanize(), true);
                         embed.AddField("Roles", roleString, true);
                         embed.AddField("XP", xp, true);
-                        embed.AddField("Wallet", points, true);
                         embed.AddField("Warnings", warnings.ToString(), true);
                         embed.AddField("Server", server.Name, true);
                         embed.SetFooter("MODiX watching everything ");
@@ -247,7 +243,6 @@ namespace MODiX.Commands.Commands
                 var botAvatar = bot.Avatar!;
                 var botName = bot.Name;
                 var botUptime = BotTimerService.GetBotUptime();
-                var creatorName = "Async<RogueLabs>";
 
                 var uptime = BotTimerService.GetBotUptime();
                 var sw = Stopwatch.StartNew();

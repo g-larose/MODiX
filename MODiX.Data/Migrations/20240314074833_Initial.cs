@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,18 +13,51 @@ namespace MODiX.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Commands",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Limit = table.Column<int>(type: "integer", nullable: false),
+                    Cooldown = table.Column<int>(type: "integer", nullable: false),
+                    Timeout = table.Column<int>(type: "integer", nullable: false),
+                    ServerId = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Commands", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Logs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServerId = table.Column<string>(type: "text", nullable: true),
+                    ChannelId = table.Column<string>(type: "text", nullable: true),
+                    Timestamp = table.Column<string>(type: "text", nullable: true),
+                    Content = table.Column<string>(type: "text", nullable: true),
+                    Type = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Logs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ServerMembers",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: true),
                     ServerId = table.Column<string>(type: "text", nullable: true),
-                    Xp = table.Column<int>(type: "integer", nullable: false),
+                    Xp = table.Column<long>(type: "bigint", nullable: false),
                     Warnings = table.Column<int>(type: "integer", nullable: false),
-                    RoleIds = table.Column<int[]>(type: "integer[]", nullable: false),
-                    Nickname = table.Column<string>(type: "text", nullable: false),
+                    RoleIds = table.Column<long[]>(type: "bigint[]", nullable: false),
+                    Nickname = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    JoinedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    JoinedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Nicknames = table.Column<List<string>>(type: "text[]", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -31,7 +65,7 @@ namespace MODiX.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LocalChannelMessage",
+                name: "Messages",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -44,9 +78,9 @@ namespace MODiX.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LocalChannelMessage", x => x.Id);
+                    table.PrimaryKey("PK_Messages", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_LocalChannelMessage_ServerMembers_LocalServerMemberId",
+                        name: "FK_Messages_ServerMembers_LocalServerMemberId",
                         column: x => x.LocalServerMemberId,
                         principalTable: "ServerMembers",
                         principalColumn: "Id");
@@ -78,7 +112,8 @@ namespace MODiX.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TicketType = table.Column<int>(type: "integer", nullable: false),
-                    CreatorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AuthorId1 = table.Column<Guid>(type: "uuid", nullable: true),
+                    AuthorId = table.Column<string>(type: "text", nullable: true),
                     Content = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false)
@@ -87,16 +122,15 @@ namespace MODiX.Data.Migrations
                 {
                     table.PrimaryKey("PK_Tickets", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tickets_ServerMembers_CreatorId",
-                        column: x => x.CreatorId,
+                        name: "FK_Tickets_ServerMembers_AuthorId1",
+                        column: x => x.AuthorId1,
                         principalTable: "ServerMembers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_LocalChannelMessage_LocalServerMemberId",
-                table: "LocalChannelMessage",
+                name: "IX_Messages_LocalServerMemberId",
+                table: "Messages",
                 column: "LocalServerMemberId");
 
             migrationBuilder.CreateIndex(
@@ -105,16 +139,22 @@ namespace MODiX.Data.Migrations
                 column: "AuthorId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tickets_CreatorId",
+                name: "IX_Tickets_AuthorId1",
                 table: "Tickets",
-                column: "CreatorId");
+                column: "AuthorId1");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "LocalChannelMessage");
+                name: "Commands");
+
+            migrationBuilder.DropTable(
+                name: "Logs");
+
+            migrationBuilder.DropTable(
+                name: "Messages");
 
             migrationBuilder.DropTable(
                 name: "Suggestions");

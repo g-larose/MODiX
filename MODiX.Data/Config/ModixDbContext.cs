@@ -12,6 +12,7 @@ namespace MODiX.Data
         public DbSet<Ticket>? Tickets { get; set; }
         public DbSet<LocalChannelMessage>? Messages { get; set; }
         public DbSet<Command>? Commands { get; set; }
+        public DbSet<Log>? Logs { get; set; }
 
         public ModixDbContext(DbContextOptions options) : base(options) 
         {

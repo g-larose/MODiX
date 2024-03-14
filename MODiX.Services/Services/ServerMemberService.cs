@@ -25,13 +25,16 @@ namespace MODiX.Services.Services
             var serverId = member.ServerId;
             var memberId = member.Id;
             var user = await ctx.GetMemberAsync((HashId)serverId!, memberId);
+            if (user.IsBot) return Result<Member, string>.Err("isBot")!;
+
             var xp = await ctx.AddXpAsync((HashId)serverId!, memberId, 0);
             var roles = await ctx.GetMemberRolesAsync((HashId)serverId!, memberId);
+            
             using var db = _dbFactory.CreateDbContext();
-            var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString() && x.ServerId!.Equals(member.ServerId.ToString())).FirstOrDefault();
+            var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString()).FirstOrDefault();
 
-            if (localMember is not null) return Result<Member, string>.Err("failure")!;
-            if (user.IsBot) return Result<Member, string>.Err("failure")!;
+            if (localMember is not null) return Result<Member, string>.Err("failure: member already exists in database.")!;
+           
             var newMember = new LocalServerMember
             {
                 Id = Guid.NewGuid(),
@@ -41,13 +44,7 @@ namespace MODiX.Services.Services
                 ServerId = member.ServerId.ToString(),
                 CreatedAt = member.CreatedAt,
                 JoinedAt = user.JoinedAt,
-                RoleIds = [.. roles],
-                Wallet = new Wallet()
-                {
-                    Id = Guid.NewGuid(),
-                    MemberId = member.Id.ToString(),
-                    Points = 0
-                },
+                RoleIds = [.. roles]
             };
 
             await db!.AddAsync(newMember);
@@ -68,11 +65,11 @@ namespace MODiX.Services.Services
                     member.Warnings = warnings;
                     db.Update(member);
                     await db.SaveChangesAsync();
-                    return "success";
+                    return Result<Member, string>.Err("failuer: could't find member in database")!;
                 }
                 else
                 {
-                    var localMember = new LocalServerMember();
+                   
 
                 }
                    

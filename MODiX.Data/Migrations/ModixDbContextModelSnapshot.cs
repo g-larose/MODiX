@@ -108,9 +108,6 @@ namespace MODiX.Data.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("WalletId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Warnings")
                         .HasColumnType("integer");
 
@@ -119,9 +116,33 @@ namespace MODiX.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("WalletId");
-
                     b.ToTable("ServerMembers");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.Log", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ChannelId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServerId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Timestamp")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Logs");
                 });
 
             modelBuilder.Entity("MODiX.Data.Models.Suggestion", b =>
@@ -156,14 +177,17 @@ namespace MODiX.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("AuthorId1")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Content")
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatorId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -173,30 +197,9 @@ namespace MODiX.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatorId");
+                    b.HasIndex("AuthorId1");
 
                     b.ToTable("Tickets");
-                });
-
-            modelBuilder.Entity("MODiX.Data.Models.Wallet", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("MemberId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Points")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ServerId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Wallet");
                 });
 
             modelBuilder.Entity("MODiX.Data.Models.LocalChannelMessage", b =>
@@ -204,15 +207,6 @@ namespace MODiX.Data.Migrations
                     b.HasOne("MODiX.Data.Models.LocalServerMember", null)
                         .WithMany("Messages")
                         .HasForeignKey("LocalServerMemberId");
-                });
-
-            modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>
-                {
-                    b.HasOne("MODiX.Data.Models.Wallet", "Wallet")
-                        .WithMany()
-                        .HasForeignKey("WalletId");
-
-                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("MODiX.Data.Models.Suggestion", b =>
@@ -226,13 +220,11 @@ namespace MODiX.Data.Migrations
 
             modelBuilder.Entity("MODiX.Data.Models.Ticket", b =>
                 {
-                    b.HasOne("MODiX.Data.Models.LocalServerMember", "Creator")
+                    b.HasOne("MODiX.Data.Models.LocalServerMember", "Author")
                         .WithMany()
-                        .HasForeignKey("CreatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AuthorId1");
 
-                    b.Navigation("Creator");
+                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>

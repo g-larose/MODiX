@@ -9,6 +9,7 @@ namespace MODiX.Data.Models
     public class Wallet
     {
         public Guid Id { get; set; }
+        public LocalServerMember? Member { get; set; }
         public string MemberId { get; set; } = string.Empty;
         public string? ServerId { get; set; }
         public int Points { get; set; }
