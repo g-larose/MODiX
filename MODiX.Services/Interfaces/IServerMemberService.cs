@@ -9,12 +9,12 @@ namespace MODiX.Services.Interfaces
 {
     public interface IServerMemberService
     {
-        Task<IList<MemberSummary>> GetServerMembersAsync(AbstractGuildedClient client, HashId serverId);
-        Task<LocalServerMember> GetServerMemberAsync(HashId memberId);
-        Task<string[]> GetMembersPermissions(Member member);
+        Task<Result<IList<MemberSummary>, string>> GetServerMembersAsync(HashId serverId);
+        Task<Result<LocalServerMember, string>> GetServerMemberAsync(HashId memberId);
+        Task<Result<string[], string>> GetMembersPermissionsAsync(Member member);
         Task<Result<Role, string>> GetMemberRoleNameAsync(Member member, uint roleId);
         Task<Server[]> GetMemberServersAsync(string userId);
-        Task<Result<Member, string>> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member);
+        Task<Result<Member, string>> AddServerMemberToDBAsync(Member member);
         Task<Result<Member, string>> AddWarningAsync(string memberId);
         Task<bool> KickServerMemberAsync(HashId memberId);
         Task<bool> BanMemberAsync(HashId memberId);

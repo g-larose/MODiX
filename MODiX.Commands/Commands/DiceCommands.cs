@@ -36,6 +36,7 @@ namespace MODiX.Commands.Commands
             {
                 var rollDie = string.Join(",", rollResult.Die);
                 embed.SetTitle($"Dice Roller");
+                embed.SetThumbnail(new EmbedMedia("https://cdn.gilcdn.com/MediaChannelUpload/e615752d38a881e44543348ae8bda8c2-Full.webp?w=1500&h=1500"));
                 embed.SetDescription($"<@{author.Id}> rolled [{rollDie}] {rollResult.Die.Count} , {rollResult.Sides} sided dice\r\nfor a total of [{rollResult.Die.Sum()}]");
                 embed.AddField("Id", rollResult.Id, true);
                 embed.AddField("Rolled At", rollResult.RolledAt!, true);

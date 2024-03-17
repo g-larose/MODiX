@@ -19,16 +19,23 @@ namespace MODiX.Services.Services
     public class ServerMemberService : DisposableBase, IServerMemberService, IDisposable
     {
         private ModixDbContextFactory _dbFactory = new();
-        
-        public async Task<Result<Member, string>> AddServerMemberToDBAsync(AbstractGuildedClient ctx, Member member)
+        private AbstractGuildedClient _client { get; set; }
+
+        public ServerMemberService(AbstractGuildedClient client)
+        {
+            _client = client;
+        }
+
+        #region ADD SERVER MEMBER TO DB
+        public async Task<Result<Member, string>> AddServerMemberToDBAsync(Member member)
         {
             var serverId = member.ServerId;
             var memberId = member.Id;
-            var user = await ctx.GetMemberAsync((HashId)serverId!, memberId);
+            var user = await _client.GetMemberAsync((HashId)serverId!, memberId);
             if (user.IsBot) return Result<Member, string>.Err("isBot")!;
 
-            var xp = await ctx.AddXpAsync((HashId)serverId!, memberId, 0);
-            var roles = await ctx.GetMemberRolesAsync((HashId)serverId!, memberId);
+            var xp = await _client.AddXpAsync((HashId)serverId!, memberId, 0);
+            var roles = await _client.GetMemberRolesAsync((HashId)serverId!, memberId);
             
             using var db = _dbFactory.CreateDbContext();
             var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString()).FirstOrDefault();
@@ -44,7 +51,13 @@ namespace MODiX.Services.Services
                 ServerId = member.ServerId.ToString(),
                 CreatedAt = member.CreatedAt,
                 JoinedAt = user.JoinedAt,
-                RoleIds = [.. roles]
+                RoleIds = [.. roles],
+                Wallet = new Wallet()
+                {
+                    MemberId = member.Id.ToString(),
+                    ServerId = serverId.ToString(),
+                    Points = 0
+                }
             };
 
             await db!.AddAsync(newMember);
@@ -52,7 +65,9 @@ namespace MODiX.Services.Services
             return member;
             
         }
+        #endregion
 
+        #region ADD WARNING TO MEMBER
         public async Task<Result<Member, string>> AddWarningAsync(string memberId)
         {
             try
@@ -70,17 +85,17 @@ namespace MODiX.Services.Services
                 else
                 {
                    
-
+                    return Result<Member, string>.Err("failuer: could't find member in database")!;
                 }
                    
             }
             catch(Exception e)
             {
-                return $"failure: {e.Message}";
+                return Result<Member, string>.Err($"{e.Message}")!;
             }
-             return "member not found";
             
         }
+        #endregion
 
         public Task<bool> BanMemberAsync(HashId memberId)
         {
@@ -93,22 +108,21 @@ namespace MODiX.Services.Services
             disposableBase.Dispose();
         }
 
-        public Task<string[]> GetMembersPermissions(Member member)
+        public Task<Result<string[], string>> GetMembersPermissionsAsync(Member member)
         {
             return null;
               
         }
 
-        public Task<LocalServerMember> GetServerMemberAsync(HashId memberId)
+        public Task<Result<LocalServerMember, string>> GetServerMemberAsync(HashId memberId)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<IList<MemberSummary>> GetServerMembersAsync(AbstractGuildedClient client, HashId serverId)
+        public async Task<Result<IList<MemberSummary>, string>> GetServerMembersAsync(HashId serverId)
         {
-            var server = await client.GetServerAsync(serverId);
-            var members = await client.GetMembersAsync(serverId);
-            return members;
+            var members = await _client.GetMembersAsync(serverId);
+            return members.ToList();
         }
 
         public Task<bool> KickServerMemberAsync(HashId memberId)
@@ -116,12 +130,20 @@ namespace MODiX.Services.Services
             throw new NotImplementedException();
         }
 
-        public async Task<IList<MemberSummary>> LoadServerMembersAsync(AbstractGuildedClient client, HashId serverId)
+        #region LOAD LOCAL SERVER MEMBERS
+        /// <summary>
+        /// Loads server members from database
+        /// </summary>
+        /// <param name="serverId"></param>
+        /// <returns>List of LocalServerMember</LocalServerMember></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public Result<List<LocalServerMember>, string> LoadServerMembers(HashId serverId)
         {
-            var server = await client.GetServerAsync(serverId);
-            var members = await client.GetMembersAsync(serverId);
-            return members;
+
+            throw new NotImplementedException();
+
         }
+        #endregion
 
         public Task<bool> MuteMemberAsync(HashId memberId)
         {

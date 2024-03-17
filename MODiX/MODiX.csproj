@@ -10,6 +10,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\die.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Guilded" Version="1.7.1" />
     <PackageReference Include="Guilded.Base" Version="1.7.0" />
     <PackageReference Include="Guilded.Commands" Version="1.7.1" />
@@ -40,6 +44,12 @@
     <ProjectReference Include="..\MODiX.Commands\MODiX.Commands.csproj" />
     <ProjectReference Include="..\MODiX.Data\MODiX.Data.csproj" />
     <ProjectReference Include="..\MODiX.Services\MODiX.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\die.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>

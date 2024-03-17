@@ -4,6 +4,7 @@ using MODiX.Services.Interfaces;
 using MODiX.Services.Services;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace MODiX.Commands.Commands
 
         [Command(Aliases = new string[] { "tag" })]
         [Description("tag commands")]
-        public async Task Tag(CommandEvent invokator, string cmd, string title = null, string[] args = null)
+        public async Task Tag(CommandEvent invokator, string cmd, string? title = null, string[]? args = null)
         {
             var embed = new Embed();
             if (cmd is not null)
@@ -24,10 +25,13 @@ namespace MODiX.Commands.Commands
                 switch (cmd)
                 {
                     case "banhammer":
-                        await invokator.CreateMessageAsync("https://i.imgur.com/1oyBExo.gifv");
+                        embed.SetThumbnail(new EmbedMedia("https://cdn.gilcdn.com/MediaChannelUpload/e615752d38a881e44543348ae8bda8c2-Full.webp?w=1500&h=1500"));
+                        await invokator.CreateMessageAsync(embed);
                         break;
                     default:
-                        await invokator.CreateMessageAsync("un-recognizable command.");
+                        embed.SetDescription("I couldn't fint the command, please add the command to the list of tag commands.");
+                        embed.SetColor(EmbedColorService.GetColor("gray", Color.Gray));
+                        await invokator.CreateMessageAsync(embed);
                         break;
                 }
             }

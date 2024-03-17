@@ -18,7 +18,7 @@ namespace MODiX.Commands.Commands
     public class ModCommands : CommandModule
     {
         private readonly ModixDbContextFactory dbFactory = new();
-        private readonly ServerMemberService memService = new();
+
         private static string? timePattern = "hh:mm:ss tt";
 
         #region WARN
@@ -396,6 +396,7 @@ namespace MODiX.Commands.Commands
         [Description("add a member to the Database")]
         public async Task AddMember(CommandEvent invokator, string mentionedMember = "")
         {
+            using ServerMemberService memService = new(invokator.ParentClient);
             var memberId = invokator!.Message.CreatedBy;
             var mentionedUserId = invokator!.Mentions!.Users!.First().Id;
             var serverId = invokator!.ServerId!;
@@ -414,7 +415,7 @@ namespace MODiX.Commands.Commands
             else
             {
 
-                var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
+                var result = await memService.AddServerMemberToDBAsync(user);
                 if (result.IsOk)
                 {
                     var db = dbFactory.CreateDbContext();
@@ -439,6 +440,7 @@ namespace MODiX.Commands.Commands
         [Description("runs matinence on the server.")]
         public async Task Mantinence(CommandEvent invokator, string cmd)
         {
+            using ServerMemberService memService = new(invokator.ParentClient);
             var time = DateTime.Now.ToString(timePattern);
             var date = DateTime.Now.ToShortDateString();
             var db = dbFactory.CreateDbContext();
@@ -460,8 +462,9 @@ namespace MODiX.Commands.Commands
                             {
                                 var dbUser = db.ServerMembers!.Where(x => x.UserId!.Equals(mem.Id.ToString())).FirstOrDefault();
                                 if (dbUser is not null) continue;
+
                                 var user = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, mem.Id);
-                                var result = await memService.AddServerMemberToDBAsync(invokator.ParentClient, user);
+                                var result = await memService.AddServerMemberToDBAsync(user);
                                     
                                 if (!result.IsOk && result.Error != "isBot")
                                 {

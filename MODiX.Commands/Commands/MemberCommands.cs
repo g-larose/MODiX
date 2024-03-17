@@ -13,6 +13,7 @@ using MODiX.Services.Features.Welcomer;
 using MODiX.Services.Services;
 using Humanizer;
 using MODiX.Data.Models;
+using System.Runtime.InteropServices;
 
 namespace MODiX.Commands.Commands
 {
@@ -21,7 +22,7 @@ namespace MODiX.Commands.Commands
         //member commands
         // uptime, profile (mentioned member profile), help, serverInfo
         private readonly ModixDbContextFactory dbFactory = new();
-        private readonly ServerMemberService memService = new();
+        
         private MusicPlayerProvider player = new();
         private static string? timePattern = "hh:mm:ss tt";
 
@@ -63,6 +64,7 @@ namespace MODiX.Commands.Commands
         [Description("gets the triggering users member info")]
         public async Task Profile(CommandEvent invokator, string mentions = "")
         {
+            ServerMemberService memService = new(invokator.ParentClient);
             try
             {
                 var embed = new Embed();
@@ -85,9 +87,12 @@ namespace MODiX.Commands.Commands
                     }
                     var roleString = string.Join(",", roles);
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(author.Id.ToString())).ToList();
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim()
+                            .Equals(author.Id.ToString()))
+                            .Include(x => x.Wallet)
+                            .FirstOrDefault();
 
-                    if (localUser is null || localUser.Count < 1)
+                    if (localUser is null)
                     {
                         embed.SetTitle($"Profile for {author.Name}");
                         embed.SetDescription($"{author.Name} isn't in the database, run add command to add this member.");
@@ -105,7 +110,7 @@ namespace MODiX.Commands.Commands
                     }
                     else
                     {
-                        var warnings = localUser.Select(x => x.Warnings).First();
+                        var warnings = localUser.Warnings;
                         embed = new Embed();
                         embed.SetDescription($"Profile for <@{author.Id}> requested by <@{authorId}>");
                         embed.SetThumbnail(author.Avatar!.AbsoluteUri);
@@ -114,6 +119,7 @@ namespace MODiX.Commands.Commands
                         embed.AddField("Created", author.CreatedAt.Humanize(), true);
                         embed.AddField("Roles", roleString, true);
                         embed.AddField("XP", xp, true);
+                        embed.AddField("Wallet", localUser?.Wallet?.Points);
                         embed.AddField("Warnings", warnings.ToString(), true);
                         embed.AddField("Server", server.Name, true);
                         embed.SetFooter("MODiX watching everything ");
@@ -142,9 +148,12 @@ namespace MODiX.Commands.Commands
                     }
                     var roleString = string.Join(",", roles);
                     using var db = dbFactory.CreateDbContext();
-                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim().Equals(user.Id.ToString())).ToList();
+                    var localUser = db!.ServerMembers!.Where(x => x.UserId!.Trim()
+                        .Equals(user.Id.ToString()))
+                        .Include(x => x.Wallet)
+                        .FirstOrDefault();
 
-                    if (localUser is null || localUser.Count < 1)
+                    if (localUser is null)
                     {
                         embed.SetTitle($"Profile for {user.Name}");
                         embed.SetDescription($"{user.Name} isn't in the database, run add command to add this member.");
@@ -162,7 +171,7 @@ namespace MODiX.Commands.Commands
                     }
                     else
                     {
-                        var warnings = localUser.Select(x => x.Warnings).FirstOrDefault();
+                        var warnings = localUser.Warnings;
                         embed = new Embed();
                         embed.SetDescription($"Profile for <@{user.Id}> requested by <@{authorId}>");
                         if (user.Avatar.AbsoluteUri != "")
@@ -172,6 +181,7 @@ namespace MODiX.Commands.Commands
                         embed.AddField("Created", user.CreatedAt.Humanize(), true);
                         embed.AddField("Roles", roleString, true);
                         embed.AddField("XP", xp, true);
+                        embed.AddField("Wallet", localUser?.Wallet?.Points);
                         embed.AddField("Warnings", warnings.ToString(), true);
                         embed.AddField("Server", server.Name, true);
                         embed.SetFooter("MODiX watching everything ");
@@ -259,7 +269,7 @@ namespace MODiX.Commands.Commands
 
                 var embed = new Embed();
                 embed.SetTitle($"{botName} Info");
-                embed.SetDescription("[Join MODiX LAbs](https://www.guilded.gg/i/kaBnGo9p)");
+                embed.SetDescription("[Join MODiX Labs](https://www.guilded.gg/i/kaBnGo9p)");
                 embed.AddField("Creator", $"<@mq1ezklm>", false);
                 embed.AddField("Server Id", $"`{serverId}`", true);
                 embed.AddField("Bot Id", $"`{botId}`", true);
@@ -353,17 +363,17 @@ namespace MODiX.Commands.Commands
         [Description("get the server info")]
         public async Task ServerInfo(CommandEvent invokator)
         {
-            using var serverService = new ServerMemberService();
+            using ServerMemberService memService = new(invokator.ParentClient);
             var serverId = invokator.ServerId;
             var client = invokator.ParentClient;
             var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
             var ownerId = server.OwnerId;
             var owner = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, ownerId);
-            var members = await serverService.GetServerMembersAsync(client, (HashId)serverId!);
+            var members = await memService.GetServerMembersAsync((HashId)serverId!);
             var memberCount = 0;
-            for (int i = 0; i < members.Count; i++)
+            for (int i = 0; i < members.Value.Count(); i++)
             {
-                if (!members[i].IsBot)
+                if (!members.Value[i].IsBot)
                     memberCount++;
             }
 
