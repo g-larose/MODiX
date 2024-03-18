@@ -323,6 +323,17 @@ namespace MODiX.Commands.Commands
         }
         #endregion
 
+        #region RIDDLE ME THIS
+        [Command(Aliases = [ "riddle" ])]
+        [Description("bot sends a random riddle to be solved")]
+        public async Task AskRiddle(CommandEvent invokator)
+        {
+            var riddleProvider = new DataProviderService();
+            var riddle = riddleProvider.GetRiddle();
+            var test = "";
+        }
+        #endregion
+
         #region WELCOME MEMBER
         [Command(Aliases = new string[] { "welcome" })]
         [Description("says a random welcome message")]

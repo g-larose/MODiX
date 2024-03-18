@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using MODiX.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    partial class ModixDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240318223810_AddModel_SystemError")]
+    partial class AddModel_SystemError
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -68,11 +68,11 @@ namespace MODiX.Services.Services
         #endregion
 
         #region ADD WARNING TO MEMBER
-        public async Task<Result<Member, string>> AddWarningAsync(string memberId)
+        public async Task<Result<LocalServerMember, string>> AddWarningAsync(string memberId)
         {
             try
             {
-                var db = _dbFactory.CreateDbContext();
+                using var db = _dbFactory.CreateDbContext();
                 var member = db.ServerMembers!.Where(x => x.UserId == memberId).FirstOrDefault();
                 if (member is not null)
                 {
@@ -80,18 +80,17 @@ namespace MODiX.Services.Services
                     member.Warnings = warnings;
                     db.Update(member);
                     await db.SaveChangesAsync();
-                    return Result<Member, string>.Err("failuer: could't find member in database")!;
+                    return Result<LocalServerMember, string>.Ok(member)!;
                 }
                 else
                 {
-                   
-                    return Result<Member, string>.Err("failuer: could't find member in database")!;
+                    return Result<LocalServerMember, string>.Err("failuer: could't find member in database")!;
                 }
                    
             }
             catch(Exception e)
             {
-                return Result<Member, string>.Err($"{e.Message}")!;
+                return Result<LocalServerMember, string>.Err($"{e.Message}")!;
             }
             
         }

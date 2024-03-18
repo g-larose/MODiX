@@ -14,6 +14,7 @@ namespace MODiX.Services.Interfaces
         void SaveMemberToDb(LocalServerMember member);
         List<LocalServerMember> GetAllServerMembers();
         LocalServerMember RemoveServerMemberFromDb(string username);
+        Result<Riddle, SystemError> GetRiddle();
         int GetMemberXpByName(string username);
         int GetMemberWarningsByName(string username);
     }

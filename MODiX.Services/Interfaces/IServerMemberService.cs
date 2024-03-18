@@ -15,7 +15,7 @@ namespace MODiX.Services.Interfaces
         Task<Result<Role, string>> GetMemberRoleNameAsync(Member member, uint roleId);
         Task<Server[]> GetMemberServersAsync(string userId);
         Task<Result<Member, string>> AddServerMemberToDBAsync(Member member);
-        Task<Result<Member, string>> AddWarningAsync(string memberId);
+        Task<Result<LocalServerMember, string>> AddWarningAsync(string memberId);
         Task<bool> KickServerMemberAsync(HashId memberId);
         Task<bool> BanMemberAsync(HashId memberId);
         Task<bool> UnBanMemberAsync(HashId memberId);
