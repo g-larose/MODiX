@@ -249,6 +249,7 @@ namespace MODiX.Commands.Commands
             {
                 var botId = invokator.ParentClient.Id;
                 var serverId = invokator.Message.ServerId;
+                var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
                 var bot = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, (HashId)botId!);
                 var botAvatar = bot.Avatar!;
                 var botName = bot.Name;
@@ -270,10 +271,9 @@ namespace MODiX.Commands.Commands
                 var embed = new Embed();
                 embed.SetTitle($"{botName} Info");
                 embed.SetDescription("[Join MODiX Labs](https://www.guilded.gg/i/kaBnGo9p)");
-                embed.AddField("Creator", $"<@mq1ezklm>", false);
-                embed.AddField("Server Id", $"`{serverId}`", true);
-                embed.AddField("Bot Id", $"`{botId}`", true);
-                embed.AddField("Bot Name", $"`{botName}`", true);
+                embed.AddField("Developer", $"<@mq1ezklm>", false);
+                embed.AddField("Server", $"`{server.Name}`", true);
+                embed.AddField("Bot", $"`{bot.Name}`", true);
                 embed.AddField("Uptime", $"`{botUptime}`", true);
                 embed.AddField("Db Ping", $"`{dbLatency}ms`", true);
                 embed.AddField("Api Ping", $"`{pingTime}ms`", true);
@@ -330,7 +330,16 @@ namespace MODiX.Commands.Commands
         {
             var riddleProvider = new DataProviderService();
             var riddle = riddleProvider.GetRiddle();
-            var test = "";
+            if (riddle.IsOk)
+            {
+                await invokator.ReplyAsync($"Riddle: {riddle.Value.riddle}");
+            }
+            else
+                 await invokator.ReplyAsync($"something went wrong, please refer this code to a moderator: [{riddle.Error.ErrorCode}]");
+                
+
+
+
         }
         #endregion
 
