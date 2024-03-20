@@ -130,7 +130,7 @@ namespace MODiX
             client.MessageCreated
                 .Subscribe(async msg =>
                 {
-                  await msgHandler.HandleMessageAsync(msg.Message);
+                 // await msgHandler.HandleMessageAsync(msg.Message);
                    
                 });
 

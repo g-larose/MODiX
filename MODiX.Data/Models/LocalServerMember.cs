@@ -8,7 +8,7 @@ namespace MODiX.Data.Models
 {
     public class LocalServerMember
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public int Id { get; set; }
         public string? UserId { get; set; }
         public string? ServerId { get; set; }
         public long Xp { get; set; }
@@ -19,8 +19,10 @@ namespace MODiX.Data.Models
         public DateTime JoinedAt { get; set; }
         public List<LocalChannelMessage>? Messages { get; set; }
         public List<string>? Nicknames { get; set; } = new();
-        public Wallet? Wallet { get; set; }
-        public Guid? WalletId { get; set; }
+        public int WalletId { get; set; }
+        public Wallet Wallet { get; set; } = new();
+        public Bank Bank { get; set; } = null;
+        public int BankId { get; set; }
 
     }
 }

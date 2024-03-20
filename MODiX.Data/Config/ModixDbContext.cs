@@ -47,5 +47,14 @@ namespace MODiX.Data
             optionsBuilder.UseNpgsql(conStr!.ConnectionString);
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Bank>()
+                        .HasOne(e => e.Member)
+                        .WithOne(e => e.Bank)
+                        .HasForeignKey<LocalServerMember>("BankId")
+                        .IsRequired();
+        }
     }
 }

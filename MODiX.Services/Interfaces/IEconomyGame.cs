@@ -13,7 +13,7 @@ namespace MODiX.Services.Interfaces
         Result<int, string> GetWork();
         Result<int, string> GetCommunity();
         Result<int, string> GetHobby();
-        Result<int, string> GetChores();
+        Result<int, SystemError> GetChores();
         Task<Result<int, string>> GetMemberBalance(string memberId);
         Task<Result<int, string>> SetMemberBalance(string memberId);
         Task<Result<int, string>> AddToMemberBalance(string memberId);

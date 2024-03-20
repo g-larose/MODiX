@@ -44,7 +44,6 @@ namespace MODiX.Services.Services
            
             var newMember = new LocalServerMember
             {
-                Id = Guid.NewGuid(),
                 Nickname = member.Name,
                 UserId = member.User.Id.ToString(),
                 Xp = xp,

@@ -27,12 +27,16 @@ namespace MODiX.Services.Services
         }
 
 
-        public Result<int, string> GetChores()
+        public Result<int, SystemError> GetChores()
         {
             var rnd = new Random();
             var chores = rnd.Next(100, 999);
-            if (chores < 100 || chores > 999) return Result<int, string>.Err("failure: unable to generate chores points")!;
-            return chores;
+            if (chores < 100 || chores > 999) return Result<int, SystemError>.Err(new SystemError()
+            {
+                ErrorCode = Guid.NewGuid(),
+                ErrorMessage = "Could not load chores"
+            })!;
+            return Result<int, SystemError>.Ok(chores)!;
         }
 
         public Result<int, string> GetCommunity()

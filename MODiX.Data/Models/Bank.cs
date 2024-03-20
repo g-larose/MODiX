@@ -9,9 +9,12 @@ namespace MODiX.Data.Models
 {
     public class Bank
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
+        public Guid? Identifier { get; set; }
         public double AccountTotal { get; set; }
         public string? ServerId { get; set; }
-        public Guid? MemberId { get; set; }
+        public LocalServerMember Member { get; set; } = null;
+        public int BankId { get; set; }
+        public DateTime DepositedAt { get; set; }
     }
 }

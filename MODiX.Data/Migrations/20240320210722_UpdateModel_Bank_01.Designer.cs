@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    [Migration("20240314074833_Initial")]
-    partial class Initial
+    [Migration("20240320210722_UpdateModel_Bank_01")]
+    partial class UpdateModel_Bank_01
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,34 @@ namespace MODiX.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("MODiX.Data.Models.Bank", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("AccountTotal")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid?>("Identifier")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("LocalServerMemberId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ServerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocalServerMemberId")
+                        .IsUnique();
+
+                    b.ToTable("Bank");
+                });
 
             modelBuilder.Entity("MODiX.Data.Models.Command", b =>
                 {
@@ -67,8 +95,8 @@ namespace MODiX.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("LocalServerMemberId")
-                        .HasColumnType("uuid");
+                    b.Property<int?>("LocalServerMemberId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("MessageContent")
                         .HasColumnType("text");
@@ -85,9 +113,11 @@ namespace MODiX.Data.Migrations
 
             modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -111,6 +141,9 @@ namespace MODiX.Data.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
+                    b.Property<int>("WalletId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Warnings")
                         .HasColumnType("integer");
 
@@ -118,6 +151,9 @@ namespace MODiX.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("WalletId")
+                        .IsUnique();
 
                     b.ToTable("ServerMembers");
                 });
@@ -157,8 +193,8 @@ namespace MODiX.Data.Migrations
                     b.Property<bool>("Approved")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid?>("AuthorId")
-                        .HasColumnType("uuid");
+                    b.Property<int?>("AuthorId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -174,6 +210,25 @@ namespace MODiX.Data.Migrations
                     b.ToTable("Suggestions");
                 });
 
+            modelBuilder.Entity("MODiX.Data.Models.SystemError", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("ErrorCode")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Errors");
+                });
+
             modelBuilder.Entity("MODiX.Data.Models.Ticket", b =>
                 {
                     b.Property<Guid>("Id")
@@ -183,8 +238,8 @@ namespace MODiX.Data.Migrations
                     b.Property<string>("AuthorId")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("AuthorId1")
-                        .HasColumnType("uuid");
+                    b.Property<int?>("AuthorId1")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Content")
                         .HasColumnType("text");
@@ -205,11 +260,58 @@ namespace MODiX.Data.Migrations
                     b.ToTable("Tickets");
                 });
 
+            modelBuilder.Entity("MODiX.Data.Models.Wallet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("Identifier")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MemberId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ServerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Wallet");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.Bank", b =>
+                {
+                    b.HasOne("MODiX.Data.Models.LocalServerMember", "Member")
+                        .WithOne("Bank")
+                        .HasForeignKey("MODiX.Data.Models.Bank", "LocalServerMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
             modelBuilder.Entity("MODiX.Data.Models.LocalChannelMessage", b =>
                 {
                     b.HasOne("MODiX.Data.Models.LocalServerMember", null)
                         .WithMany("Messages")
                         .HasForeignKey("LocalServerMemberId");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>
+                {
+                    b.HasOne("MODiX.Data.Models.Wallet", "Wallet")
+                        .WithOne("Member")
+                        .HasForeignKey("MODiX.Data.Models.LocalServerMember", "WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("MODiX.Data.Models.Suggestion", b =>
@@ -232,7 +334,15 @@ namespace MODiX.Data.Migrations
 
             modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>
                 {
+                    b.Navigation("Bank")
+                        .IsRequired();
+
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("MODiX.Data.Models.Wallet", b =>
+                {
+                    b.Navigation("Member");
                 });
 #pragma warning restore 612, 618
         }

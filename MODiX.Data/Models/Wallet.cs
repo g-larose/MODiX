@@ -8,7 +8,8 @@ namespace MODiX.Data.Models
 {
     public class Wallet
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
+        public Guid? Identifier { get; set; }
         public LocalServerMember? Member { get; set; }
         public string? MemberId { get; set; }
         public string? ServerId { get; set; }

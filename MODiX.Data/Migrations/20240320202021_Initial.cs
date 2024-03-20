@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -29,6 +30,20 @@ namespace MODiX.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Errors",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ErrorCode = table.Column<Guid>(type: "uuid", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Errors", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Logs",
                 columns: table => new
                 {
@@ -45,10 +60,27 @@ namespace MODiX.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Wallet",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Identifier = table.Column<Guid>(type: "uuid", nullable: true),
+                    MemberId = table.Column<string>(type: "text", nullable: true),
+                    ServerId = table.Column<string>(type: "text", nullable: true),
+                    Points = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Wallet", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ServerMembers",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<string>(type: "text", nullable: true),
                     ServerId = table.Column<string>(type: "text", nullable: true),
                     Xp = table.Column<long>(type: "bigint", nullable: false),
@@ -57,11 +89,19 @@ namespace MODiX.Data.Migrations
                     Nickname = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     JoinedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Nicknames = table.Column<List<string>>(type: "text[]", nullable: true)
+                    Nicknames = table.Column<List<string>>(type: "text[]", nullable: true),
+                    WalletId = table.Column<int>(type: "integer", nullable: false),
+                    BankId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ServerMembers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ServerMembers_Wallet_WalletId",
+                        column: x => x.WalletId,
+                        principalTable: "Wallet",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -74,7 +114,7 @@ namespace MODiX.Data.Migrations
                     ServerId = table.Column<string>(type: "text", nullable: true),
                     MessageContent = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LocalServerMemberId = table.Column<Guid>(type: "uuid", nullable: true)
+                    LocalServerMemberId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -91,7 +131,7 @@ namespace MODiX.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    AuthorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    AuthorId = table.Column<int>(type: "integer", nullable: true),
                     Content = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Approved = table.Column<bool>(type: "boolean", nullable: false)
@@ -112,7 +152,7 @@ namespace MODiX.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     TicketType = table.Column<int>(type: "integer", nullable: false),
-                    AuthorId1 = table.Column<Guid>(type: "uuid", nullable: true),
+                    AuthorId1 = table.Column<int>(type: "integer", nullable: true),
                     AuthorId = table.Column<string>(type: "text", nullable: true),
                     Content = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -134,6 +174,12 @@ namespace MODiX.Data.Migrations
                 column: "LocalServerMemberId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ServerMembers_WalletId",
+                table: "ServerMembers",
+                column: "WalletId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Suggestions_AuthorId",
                 table: "Suggestions",
                 column: "AuthorId");
@@ -151,6 +197,9 @@ namespace MODiX.Data.Migrations
                 name: "Commands");
 
             migrationBuilder.DropTable(
+                name: "Errors");
+
+            migrationBuilder.DropTable(
                 name: "Logs");
 
             migrationBuilder.DropTable(
@@ -164,6 +213,9 @@ namespace MODiX.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ServerMembers");
+
+            migrationBuilder.DropTable(
+                name: "Wallet");
         }
     }
 }

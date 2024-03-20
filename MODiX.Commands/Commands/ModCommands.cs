@@ -77,7 +77,6 @@ namespace MODiX.Commands.Commands
                     {
                         
                         var newUser = new LocalServerMember();
-                        newUser.Id = Guid.NewGuid();
                         newUser.UserId = _user.Id.ToString();
                         newUser.ServerId = serverID.ToString();
                         newUser.Nickname = _user.Name;

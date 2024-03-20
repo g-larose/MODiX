@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    [Migration("20240318223810_AddModel_SystemError")]
-    partial class AddModel_SystemError
+    [Migration("20240320202021_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,8 +67,8 @@ namespace MODiX.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("LocalServerMemberId")
-                        .HasColumnType("uuid");
+                    b.Property<int?>("LocalServerMemberId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("MessageContent")
                         .HasColumnType("text");
@@ -85,9 +85,14 @@ namespace MODiX.Data.Migrations
 
             modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BankId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -111,8 +116,8 @@ namespace MODiX.Data.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("WalletId")
-                        .HasColumnType("uuid");
+                    b.Property<int>("WalletId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Warnings")
                         .HasColumnType("integer");
@@ -163,8 +168,8 @@ namespace MODiX.Data.Migrations
                     b.Property<bool>("Approved")
                         .HasColumnType("boolean");
 
-                    b.Property<Guid?>("AuthorId")
-                        .HasColumnType("uuid");
+                    b.Property<int?>("AuthorId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -208,8 +213,8 @@ namespace MODiX.Data.Migrations
                     b.Property<string>("AuthorId")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("AuthorId1")
-                        .HasColumnType("uuid");
+                    b.Property<int?>("AuthorId1")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Content")
                         .HasColumnType("text");
@@ -232,8 +237,13 @@ namespace MODiX.Data.Migrations
 
             modelBuilder.Entity("MODiX.Data.Models.Wallet", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("Identifier")
                         .HasColumnType("uuid");
 
                     b.Property<string>("MemberId")
@@ -261,7 +271,9 @@ namespace MODiX.Data.Migrations
                 {
                     b.HasOne("MODiX.Data.Models.Wallet", "Wallet")
                         .WithOne("Member")
-                        .HasForeignKey("MODiX.Data.Models.LocalServerMember", "WalletId");
+                        .HasForeignKey("MODiX.Data.Models.LocalServerMember", "WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Wallet");
                 });
