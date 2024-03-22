@@ -29,11 +29,44 @@ namespace MODiX.Commands.Commands
         [Description("get member's daily economy points")]
         public async Task Daily(CommandEvent invokator)
         {
-            var interval = DateTime.Parse(BotTimerService.GetStartTime()) - DateTime.Now;
 
-            using var economy = new EconomyGameService();
-            var points = economy.GetDaily();
-            await invokator.ReplyAsync($"you finished daily task and received ⭐{points}⭐ points => {interval}");
+            var memberId = invokator.Message.CreatedBy;
+            var daily = gameService.GetDaily();
+            if (daily.IsOk)
+            {
+                using var db = _dbFactory.CreateDbContext();
+                var localMember = db?.ServerMembers?.Where(x => x.UserId!.Equals(memberId.ToString()))
+                    .Include(w => w.Wallet)
+                    .FirstOrDefault();
+                var walletPoints = 0;
+                var bankTotal = 0;
+
+                if (localMember is null)
+                {
+                    // member not in database, add member to database.
+                }
+                else
+                {
+                    await invokator.ReplyAsync($"you finished daily task and received 💰{daily.Value}💰 gold");
+                    localMember.Wallet.Points += daily.Value;
+                    db.Update(localMember);
+                    await db.SaveChangesAsync();
+                }
+                
+            }
+            else
+            {
+                using var db = _dbFactory.CreateDbContext();
+                var systemError = new SystemError()
+                {
+                    ErrorCode = daily.Error.ErrorCode,
+                    ErrorMessage = daily.Error.ErrorMessage
+                };
+                db.Add(systemError);
+                await db.SaveChangesAsync();
+                await invokator.ReplyAsync($"{daily.Error.ErrorMessage}, please refer {daily.Error.ErrorCode} to a dev.");
+            }
+           
 
             
         }
@@ -112,25 +145,42 @@ namespace MODiX.Commands.Commands
         [Description("get the member's bank balance")]
         public async Task Balance(CommandEvent invokator, string member = "")
         {
-            var serverId = invokator.Message.ServerId;
-            var memberId = invokator.Message.CreatedBy;
-            var _member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
-            //using var db = _dbFactory.CreateDbContext();
-            //var localMember = db.ServerMembers?.Where(x => x.UserId!.Equals(_member.Id.ToString()))
-            //    .Include(a => a.Wallet)
-            //    .Include(b => b.Bank)
-            //    .FirstOrDefault();
-            var walletBal = gameService.GetMemberWalletBalance(memberId.ToString());
-            var bankBal = gameService.GetMemberBankBalance(memberId.ToString());
-            var embed = new Embed();
-            embed.SetTitle($"<@{memberId}>'s Balance");
-            embed.SetThumbnail(new EmbedMedia($"{_member?.Avatar?.AbsoluteUri}"));
-            embed.SetDescription($"member has {walletBal.Value} gold in their wallet.\r\nmember has {bankBal.Value} gold in the bank");
-            embed.SetFooter("MODiX watching everything ");
-            embed.SetTimestamp(DateTime.Now);
-            await invokator.ReplyAsync(embed);
-            
-           
+            if (invokator?.Mentions?.Users?.FirstOrDefault() is null || member == "")
+            {
+                var serverId = invokator.Message.ServerId;
+                var memberId = invokator.Message.CreatedBy;
+                var _member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
+                var walletBal = gameService.GetMemberWalletBalance(memberId.ToString());
+                var bankBal = gameService.GetMemberBankBalance(memberId.ToString());
+                var embed = new Embed();
+                embed.SetTitle($"<@{memberId}>(`{memberId}`)");
+                embed.SetThumbnail(new EmbedMedia($"{_member?.Avatar?.AbsoluteUri}"));
+                embed.SetDescription($"information about <@{memberId}>'s balance");
+                embed.AddField("Wallet", $"💵 {walletBal.Value} 💵", true);
+                embed.AddField("Bank", $"💰 {bankBal.Value} 💰", true);
+                embed.SetFooter("MODiX watching everything ");
+                embed.SetTimestamp(DateTime.Now);
+                await invokator.ReplyAsync(embed);
+                return;
+            }
+            else
+            {
+                var serverId = invokator.Message.ServerId;
+                var memberId = invokator.Mentions.Users.First().Id;
+                var _member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
+                var walletBal = gameService.GetMemberWalletBalance(memberId.ToString());
+                var bankBal = gameService.GetMemberBankBalance(memberId.ToString());
+                var embed = new Embed();
+                embed.SetTitle($"<@{memberId}>(`{memberId}`)");
+                embed.SetThumbnail(new EmbedMedia($"{_member?.Avatar?.AbsoluteUri}"));
+                embed.SetDescription($"information about <@{memberId}>'s balance");
+                embed.AddField("Wallet", $"💰 {walletBal.Value} 💰", true);
+                embed.AddField("Bank", $"🏦 {bankBal.Value}", true);
+                embed.SetFooter("MODiX watching everything ");
+                embed.SetTimestamp(DateTime.Now);
+                await invokator.ReplyAsync(embed);
+                return;
+            }  
         }
         #endregion
 
@@ -165,7 +215,7 @@ namespace MODiX.Commands.Commands
                     await db.SaveChangesAsync();
                     
                     embed.SetTitle($"﻿<@{memberId}> deposit successful");
-                    embed.SetDescription($"{localMember.Wallet.Points} was successfully deposited into your bank account.");
+                    embed.SetDescription($"💰{walletPoints}💰 was successfully deposited into your bank account.");
                     embed.SetFooter($"{invokator.ParentClient.Name} watching everything ");
                     embed.SetTimestamp(DateTime.Now);
                     await invokator.ReplyAsync(embed);
