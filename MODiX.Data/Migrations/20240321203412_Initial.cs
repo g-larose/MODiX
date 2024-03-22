@@ -14,6 +14,22 @@ namespace MODiX.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Bank",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Identifier = table.Column<Guid>(type: "uuid", nullable: true),
+                    AccountTotal = table.Column<double>(type: "double precision", nullable: false),
+                    ServerId = table.Column<string>(type: "text", nullable: true),
+                    DepositedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Bank", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Commands",
                 columns: table => new
                 {
@@ -97,6 +113,12 @@ namespace MODiX.Data.Migrations
                 {
                     table.PrimaryKey("PK_ServerMembers", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_ServerMembers_Bank_BankId",
+                        column: x => x.BankId,
+                        principalTable: "Bank",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_ServerMembers_Wallet_WalletId",
                         column: x => x.WalletId,
                         principalTable: "Wallet",
@@ -174,6 +196,11 @@ namespace MODiX.Data.Migrations
                 column: "LocalServerMemberId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ServerMembers_BankId",
+                table: "ServerMembers",
+                column: "BankId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ServerMembers_WalletId",
                 table: "ServerMembers",
                 column: "WalletId",
@@ -213,6 +240,9 @@ namespace MODiX.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ServerMembers");
+
+            migrationBuilder.DropTable(
+                name: "Bank");
 
             migrationBuilder.DropTable(
                 name: "Wallet");

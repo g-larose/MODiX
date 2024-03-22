@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Internal;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using MODiX.Data;
 using MODiX.Data.Factories;
 using MODiX.Data.Models;
@@ -21,12 +22,14 @@ namespace MODiX.Services.Services
         //daily: 4000 - 9999
         private readonly ModixDbContextFactory? _dbFactory = new();
 
-        public Task<Result<int, string>> AddToMemberBalance(string memberId)
+        #region ADD TO MEMBER BALANCE
+        public Task<Result<int, SystemError>> AddToMemberBalance(string memberId)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
-
+        #region GET CHORES
         public Result<int, SystemError> GetChores()
         {
             var rnd = new Random();
@@ -34,48 +37,142 @@ namespace MODiX.Services.Services
             if (chores < 100 || chores > 999) return Result<int, SystemError>.Err(new SystemError()
             {
                 ErrorCode = Guid.NewGuid(),
-                ErrorMessage = "Could not load chores"
+                ErrorMessage = "index out of range, the int returned was either to low or to high."
             })!;
             return Result<int, SystemError>.Ok(chores)!;
         }
+        #endregion
 
-        public Result<int, string> GetCommunity()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Result<int, string> GetDaily()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Result<int, string> GetHobby()
+        #region GET COMMUNITY
+        public Result<int, SystemError> GetCommunity()
         {
             var rnd = new Random();
+            var luck = rnd.Next(1000, 1999);
+            var community = rnd.Next(1000, 1999);
+            if (community < 1000 || community > 1999)
+                return Result<int, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "index out of range, the int returned was either to low or to high."
+                })!;
+            if (luck == community)
+                community += 2000;
+            return Result<int, SystemError>.Ok(community)!;
+        }
+        #endregion
+
+        #region GET DAILY
+        public Result<int, SystemError> GetDaily()
+        {
+            var rnd = new Random();
+            var luck = rnd.Next(4000, 9999);
+            var daily = rnd.Next(4000, 9999);
+            if (daily < 4000 || daily > 9999) 
+                return Result<int, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "index out of range, the int returned was either to low or to high."
+                })!;
+            if (luck == daily)
+                daily += 2000;
+            return Result<int, SystemError>.Ok(daily)!;
+        }
+        #endregion
+
+        #region GET HOBBY
+        public Result<int, SystemError> GetHobby()
+        {
+            var rnd = new Random();
+            var luck = rnd.Next(500, 1599);
             var hobby = rnd.Next(500, 1599);
-            if (hobby < 100 || hobby > 999) return Result<int, string>.Err("failure: unable to generate hobby points")!;
-            return hobby;
+            if (hobby < 500 || hobby > 1599)
+                return Result<int, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "index out of range, the int returned was either to low or to high."
+                })!;
+            if (luck == hobby)
+                hobby += 2000;
+            return Result<int, SystemError>.Ok(hobby)!;
+        }
+        #endregion
+
+        #region GET MEMBER BALANCE
+        public Result<double, SystemError> GetMemberBankBalance(string memberId)
+        {
+            using var db = _dbFactory?.CreateDbContext();
+            var member = db?.ServerMembers?.Where(x => x.UserId!.Equals(memberId))
+                .Include(b => b.Bank)
+                .FirstOrDefault();
+            if (member is null)
+            {
+                return Result<double, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "Not Found Error: user not found in Database."
+                })!;
+            }
+            else
+            {
+                return Result<double, SystemError>.Ok(member.Bank.AccountTotal)!;
+            }
+        }
+        #endregion
+
+        #region GET MEMBER WALLET BALANCE
+        public Result<int, SystemError> GetMemberWalletBalance(string memberId)
+        {
+            using var db = _dbFactory?.CreateDbContext();
+            var member = db?.ServerMembers?.Where(x => x.UserId!.Equals(memberId))
+                .Include(w => w.Wallet)
+                .FirstOrDefault();
+            if (member is null)
+            {
+                return Result<int, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "Not Found Error: user not found in Database."
+                })!;
+            }
+            else
+            {
+                return Result<int, SystemError>.Ok(member.Wallet.Points)!;
+            }
         }
 
-        public Task<Result<int, string>> GetMemberBalance(string memberId)
+        #endregion
+
+        #region GET WORK
+        public Result<int, SystemError> GetWork()
+        {
+            var rnd = new Random();
+            var luck = rnd.Next(1500, 4999);
+            var work = rnd.Next(1500, 4999);
+            if (work < 1500 || work > 4999)
+                return Result<int, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "index out of range, the int returned was either to low or to high."
+                })!;
+            if (luck == work)
+                work += 2000;
+            return Result<int, SystemError>.Ok(work)!;
+        }
+        #endregion
+
+        #region SET MEMBER BALANCE
+        public Task<Result<int, SystemError>> SetMemberBalance(string memberId)
         {
             throw new NotImplementedException();
         }
+        #endregion
 
-        public Result<int, string> GetWork()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Result<int, string>> SetMemberBalance(string memberId)
-        {
-            throw new NotImplementedException();
-        }
-
+        #region DISPOSE
         public void Dispose()
         {
             DisposableBase disposableBase = new();
             disposableBase.Dispose();
         }
+        #endregion
     }
 }

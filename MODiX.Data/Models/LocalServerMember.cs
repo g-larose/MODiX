@@ -21,7 +21,7 @@ namespace MODiX.Data.Models
         public List<string>? Nicknames { get; set; } = new();
         public int WalletId { get; set; }
         public Wallet Wallet { get; set; } = new();
-        public Bank Bank { get; set; } = null;
+        public Bank Bank { get; set; } = new();
         public int BankId { get; set; }
 
     }

@@ -22,19 +22,34 @@ namespace MODiX.Commands.Commands
     {
         private BotTimerService timer = new();
         private ModixDbContextFactory _dbFactory = new();
+        private EconomyGameService gameService = new();
+
+        #region DAILY
         [Command(Aliases = [ "daily" ] )]
         [Description("get member's daily economy points")]
         public async Task Daily(CommandEvent invokator)
         {
             var interval = DateTime.Parse(BotTimerService.GetStartTime()) - DateTime.Now;
 
-            using var economy = new EconomyProviderService();
+            using var economy = new EconomyGameService();
             var points = economy.GetDaily();
             await invokator.ReplyAsync($"you finished daily task and received ⭐{points}⭐ points => {interval}");
 
             
         }
+        #endregion
 
+        #region WORK
+        [Command(Aliases = [ "work" ])]
+        [Description("get's members work points")]
+        public async Task Work(CommandEvent invokator)
+        {
+
+        }
+
+        #endregion
+
+        #region CHORES
         [Command(Aliases = [ "chores" ])]
         [Description("get the chores value")]
         public async Task Chores(CommandEvent invokator)
@@ -55,7 +70,10 @@ namespace MODiX.Commands.Commands
                     await invokator.ReplyAsync($"you finished {chore} and received 💰{result.Value}💰 gold coins");
 
                     using var db = _dbFactory.CreateDbContext();
-                    var localMember = db.ServerMembers?.Where(x => x.UserId!.Equals(member.Id.ToString())).Include(w => w.Wallet).FirstOrDefault();
+                    var localMember = db.ServerMembers?.Where(x => x.UserId!.Equals(member.Id.ToString()))
+                        .Include(w => w.Wallet)
+                        .FirstOrDefault();
+
                     localMember!.Wallet!.Points += result.Value;
                     db.Update(localMember);
                     await db.SaveChangesAsync();
@@ -87,7 +105,9 @@ namespace MODiX.Commands.Commands
                 await db.SaveChangesAsync();
             }
         }
+        #endregion
 
+        #region BALANCE
         [Command(Aliases = [ "balance", "bal" ])]
         [Description("get the member's bank balance")]
         public async Task Balance(CommandEvent invokator, string member = "")
@@ -95,19 +115,26 @@ namespace MODiX.Commands.Commands
             var serverId = invokator.Message.ServerId;
             var memberId = invokator.Message.CreatedBy;
             var _member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
-            using var db = _dbFactory.CreateDbContext();
-            var localMember = db.ServerMembers?.Where(x => x.UserId!.Equals(_member.Id.ToString())).Include(a => a.Wallet).FirstOrDefault();
-            var bal = localMember.Wallet.Points;
+            //using var db = _dbFactory.CreateDbContext();
+            //var localMember = db.ServerMembers?.Where(x => x.UserId!.Equals(_member.Id.ToString()))
+            //    .Include(a => a.Wallet)
+            //    .Include(b => b.Bank)
+            //    .FirstOrDefault();
+            var walletBal = gameService.GetMemberWalletBalance(memberId.ToString());
+            var bankBal = gameService.GetMemberBankBalance(memberId.ToString());
             var embed = new Embed();
             embed.SetTitle($"<@{memberId}>'s Balance");
-            embed.SetDescription($"member has {bal} gold in their wallet.");
+            embed.SetThumbnail(new EmbedMedia($"{_member?.Avatar?.AbsoluteUri}"));
+            embed.SetDescription($"member has {walletBal.Value} gold in their wallet.\r\nmember has {bankBal.Value} gold in the bank");
             embed.SetFooter("MODiX watching everything ");
             embed.SetTimestamp(DateTime.Now);
             await invokator.ReplyAsync(embed);
             
            
         }
+        #endregion
 
+        #region DEPOSIT
         [Command(Aliases = [ "deposit" ])]
         [Description("deposit wallet points into the bank account")]
         public async Task Deposit(CommandEvent invokator, string args = "")
@@ -116,20 +143,34 @@ namespace MODiX.Commands.Commands
             {
                 var memberId = invokator.Message.CreatedBy;
                 var serverId = invokator.ServerId;
-                var member = invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
+                var member = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, memberId);
 
                 using var db = _dbFactory.CreateDbContext();
-                var localMember = db.ServerMembers?.Where(x => x.UserId!.Equals(member.Id.ToString())).FirstOrDefault();
-                if (localMember is not null)
+                var localMember = db.ServerMembers?.Where(x => x.UserId!.Equals(member.Id.ToString()))
+                    .Include(w => w.Wallet)
+                    .Include(b => b.Bank)
+                    .FirstOrDefault();
+                if (localMember is null)
                 {
-
+                    await invokator.ReplyAsync("unable to deposit gold, try again later");
                 }
-                var embed = new Embed();
-                embed.SetTitle($"﻿:x: invalid command argument :x: ");
-                embed.SetDescription("please specify a command argument!");
-                embed.SetFooter($"{invokator.ParentClient.Name} watching everything ");
-                embed.SetTimestamp(DateTime.Now);
-                await invokator.ReplyAsync(embed);
+                else
+                {
+                    var embed = new Embed();
+                    var walletPoints = localMember.Wallet.Points;
+                    var bankTotal = localMember.Bank.AccountTotal + walletPoints;
+                    localMember.Bank.AccountTotal += walletPoints;
+                    localMember.Wallet.Points = 0;
+                    db.Update(localMember);
+                    await db.SaveChangesAsync();
+                    
+                    embed.SetTitle($"﻿<@{memberId}> deposit successful");
+                    embed.SetDescription($"{localMember.Wallet.Points} was successfully deposited into your bank account.");
+                    embed.SetFooter($"{invokator.ParentClient.Name} watching everything ");
+                    embed.SetTimestamp(DateTime.Now);
+                    await invokator.ReplyAsync(embed);
+                }
+                
             }
             else
             {
@@ -144,5 +185,6 @@ namespace MODiX.Commands.Commands
                 }
             }
         }
+        #endregion
     }
 }

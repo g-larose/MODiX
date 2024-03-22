@@ -23,23 +23,23 @@ namespace MODiX.Commands.Commands
             var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
             var rollResult = diceRoller.Roll(author, die, sides);
 
-            if (!rollResult.IsValid)
+            if (!rollResult.IsOk)
             {
-                embed.SetTitle($"<@{rollResult.Member!.Id}> Dice Roller max die amount is 12 and max sides is 12, you tried to exceed that amount\r\nERROR!");
-                embed.AddField("Id", rollResult.Id, true);
-                embed.AddField("Rolled At", rollResult.RolledAt!, true);
+                embed.SetTitle($"<@{rollResult.Value.Member!.Id}> Dice Roller max die amount is 12 and max sides is 12, you tried to exceed that amount\r\nERROR!");
+                embed.AddField("Id", rollResult.Value.Id, true);
+                embed.AddField("Rolled At", rollResult.Value.RolledAt!, true);
                 embed.SetFooter($"MODiX watching everyone ");
                 embed.SetTimestamp(DateTime.Now);
                 await invokator.ReplyAsync(embed);
             }
             else
             {
-                var rollDie = string.Join(",", rollResult.Die);
+                var rollDie = string.Join(",", rollResult.Value.Die);
                 embed.SetTitle($"Dice Roller");
                 embed.SetThumbnail(new EmbedMedia("https://cdn.gilcdn.com/MediaChannelUpload/e615752d38a881e44543348ae8bda8c2-Full.webp?w=1500&h=1500"));
-                embed.SetDescription($"<@{author.Id}> rolled [{rollDie}] {rollResult.Die.Count} , {rollResult.Sides} sided dice\r\nfor a total of [{rollResult.Die.Sum()}]");
-                embed.AddField("Id", rollResult.Id, true);
-                embed.AddField("Rolled At", rollResult.RolledAt!, true);
+                embed.SetDescription($"<@{author.Id}> rolled [{rollDie}] {rollResult.Value.Die.Count} , {rollResult.Value.Sides} sided dice\r\nfor a total of [{rollResult.Value.Die.Sum()}]");
+                embed.AddField("Id", rollResult.Value.Id, true);
+                embed.AddField("Rolled At", rollResult.Value.RolledAt!, true);
                 embed.SetFooter($"MODiX watching everyone ");
                 embed.SetTimestamp(DateTime.Now);
                 await invokator.ReplyAsync(embed);

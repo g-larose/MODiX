@@ -1,24 +1,14 @@
 ﻿using System.Drawing;
-using System.Net.WebSockets;
 using System.Reactive.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using Guilded;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
-using Guilded.Events;
-using Guilded.Servers;
-using Guilded.Users;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using MODiX.Commands.Commands;
-using MODiX.Data;
 using MODiX.Data.Factories;
 using MODiX.Data.Models;
 using MODiX.Services.Features.Welcomer;
-using MODiX.Services.Interfaces;
 using MODiX.Services.Services;
 using Websocket.Client;
 
@@ -51,6 +41,7 @@ namespace MODiX
 
             using var msgHandler = new MessageHandler(client);
 
+            #region PREPARED
             client.Prepared
                 .Subscribe(me =>
                 {
@@ -58,7 +49,9 @@ namespace MODiX
                     var date = DateTime.Now.ToShortDateString();
                     Console.WriteLine($"[{date}][{time}][INFO]  [{me.ParentClient.Name}] listening for events...");
                 });
+            #endregion
 
+            #region MEMBER JOINED
             client.MemberJoined
                 .Subscribe(async memJoined =>
                 {
@@ -102,8 +95,9 @@ namespace MODiX
                    
 
                 });
+            #endregion
 
-
+            #region DISCONNECTED
             client.Disconnected
                 .Where(e => e.Type != DisconnectionType.NoMessageReceived)
                 .Subscribe(me =>
@@ -113,7 +107,9 @@ namespace MODiX
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     Console.WriteLine($"[{date}][{time}][ERROR] [{client.Name}] disconnected from gateway...");
                 });
+            #endregion
 
+            #region RECONNECTED
             client.Reconnected
                 .Where(x => x.Type != ReconnectionType.Initial)
                 .Where(x => x.Type != ReconnectionType.NoMessageReceived)
@@ -126,14 +122,18 @@ namespace MODiX
                     Console.WriteLine($"[{date}][{time}][INFO]  [{client.Name}] reconnected to gateway...");
 
                 });
+            #endregion
 
+            #region MESSAGE CREATED 
             client.MessageCreated
                 .Subscribe(async msg =>
                 {
                  // await msgHandler.HandleMessageAsync(msg.Message);
                    
                 });
+            #endregion
 
+            #region MESSAGE DELETED
             client.MessageDeleted
                 .Subscribe(async msg =>
                 {
@@ -173,7 +173,9 @@ namespace MODiX
                     
 
                 });
+            #endregion
 
+            #region MEMBER REMOVED
             client.MemberRemoved
                 .Subscribe(async memRemoved =>
                 {
@@ -186,7 +188,9 @@ namespace MODiX
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     Console.WriteLine($"[{date}][{time}][INFO]  [{memRemoved.Id}] has left [{memRemoved.ServerId}]");
                 });
+            #endregion
 
+            #region SERVER ADDED
             client.ServerAdded
                  .Subscribe(async server =>
                  {
@@ -227,7 +231,9 @@ namespace MODiX
                           Console.WriteLine($"[{date}][{time}][INFO]  [MODiX]  no members to add to database");
                      }                   
                  });
+            #endregion
 
+            #region MEMBER UPDATED
             client.MemberUpdated
                 .Subscribe(async memUpdated =>
                 {
@@ -268,6 +274,7 @@ namespace MODiX
                    
 
                 });
+            #endregion
 
 
             await client.ConnectAsync();

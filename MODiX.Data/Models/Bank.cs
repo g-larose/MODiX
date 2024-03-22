@@ -13,8 +13,7 @@ namespace MODiX.Data.Models
         public Guid? Identifier { get; set; }
         public double AccountTotal { get; set; }
         public string? ServerId { get; set; }
-        public LocalServerMember Member { get; set; } = null;
-        public int BankId { get; set; }
-        public DateTime DepositedAt { get; set; }
+        public string? DepositedAt { get; set; }
+        public LocalServerMember ServerMember { get; set; }
     }
 }

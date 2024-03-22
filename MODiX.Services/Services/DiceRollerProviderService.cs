@@ -11,7 +11,7 @@ namespace MODiX.Services.Services
 {
     public class DiceRollerProviderService
     {
-        public DiceRoller Roll(Member member, int dieAmount = 6, int sides = 6)
+        public Result<DiceRoller, SystemError> Roll(Member member, int dieAmount = 6, int sides = 6)
         {
             var roller = new DiceRoller();
             var rnd = new Random();
@@ -21,12 +21,11 @@ namespace MODiX.Services.Services
             {
                 if (dieAmount > 12 || sides > 12)
                 {
-                    roller.Id = Guid.Empty;
-                    roller.Sides = sides;
-                    roller.RolledAt = $"{date} {time}";
-                    roller.IsValid = false;
-                    roller.Member = member;
-
+                    return Result<DiceRoller, SystemError>.Err(new SystemError()
+                    {
+                        ErrorCode = Guid.NewGuid(),
+                        ErrorMessage = "invalid roll arguments"
+                    }) !; 
                 }
                 else
                 {
@@ -40,18 +39,18 @@ namespace MODiX.Services.Services
                     roller.RolledAt = $"{date} {time}";
                     roller.IsValid = true;
                     roller.Member = member;
+                    return Result<DiceRoller, SystemError>.Ok(roller)!;
                 }
                
             }
-            catch
+            catch (Exception e)
             {
-                roller.Id = Guid.Empty;
-                roller.IsValid = false;
-                roller.Member = member;
-                roller.RolledAt = $"{date} {time}";
+                return Result<DiceRoller, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = $"{e.Message}"
+                })!;
             }
-            
-            return roller;
         }
     }
 }

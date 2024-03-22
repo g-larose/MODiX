@@ -9,13 +9,14 @@ namespace MODiX.Services.Interfaces
 {
     public interface IEconomyGame
     {
-        Result<int, string> GetDaily();
-        Result<int, string> GetWork();
-        Result<int, string> GetCommunity();
-        Result<int, string> GetHobby();
+        Result<int, SystemError> GetDaily();
+        Result<int, SystemError> GetWork();
+        Result<int, SystemError> GetCommunity();
+        Result<int, SystemError> GetHobby();
         Result<int, SystemError> GetChores();
-        Task<Result<int, string>> GetMemberBalance(string memberId);
-        Task<Result<int, string>> SetMemberBalance(string memberId);
-        Task<Result<int, string>> AddToMemberBalance(string memberId);
+        Result<double, SystemError> GetMemberBankBalance(string memberId);
+        Result<int, SystemError> GetMemberWalletBalance(string memberId);
+        Task<Result<int, SystemError>> SetMemberBalance(string memberId);
+        Task<Result<int, SystemError>> AddToMemberBalance(string memberId);
     }
 }

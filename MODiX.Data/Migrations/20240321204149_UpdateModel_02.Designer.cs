@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    [Migration("20240320202021_Initial")]
-    partial class Initial
+    [Migration("20240321204149_UpdateModel_02")]
+    partial class UpdateModel_02
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,6 +25,34 @@ namespace MODiX.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("MODiX.Data.Models.Bank", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("AccountTotal")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("DepositedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("Identifier")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("LocalServerMemberId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ServerId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Bank");
+                });
 
             modelBuilder.Entity("MODiX.Data.Models.Command", b =>
                 {
@@ -126,6 +154,8 @@ namespace MODiX.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BankId");
 
                     b.HasIndex("WalletId")
                         .IsUnique();
@@ -269,11 +299,19 @@ namespace MODiX.Data.Migrations
 
             modelBuilder.Entity("MODiX.Data.Models.LocalServerMember", b =>
                 {
+                    b.HasOne("MODiX.Data.Models.Bank", "Bank")
+                        .WithMany()
+                        .HasForeignKey("BankId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("MODiX.Data.Models.Wallet", "Wallet")
                         .WithOne("Member")
                         .HasForeignKey("MODiX.Data.Models.LocalServerMember", "WalletId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Bank");
 
                     b.Navigation("Wallet");
                 });

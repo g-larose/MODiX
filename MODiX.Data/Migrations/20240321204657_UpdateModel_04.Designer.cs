@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using MODiX.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MODiX.Data.Migrations
 {
     [DbContext(typeof(ModixDbContext))]
-    partial class ModixDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240321204657_UpdateModel_04")]
+    partial class UpdateModel_04
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,8 +37,8 @@ namespace MODiX.Data.Migrations
                     b.Property<double>("AccountTotal")
                         .HasColumnType("double precision");
 
-                    b.Property<string>("DepositedAt")
-                        .HasColumnType("text");
+                    b.Property<DateTimeOffset>("DepositedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("Identifier")
                         .HasColumnType("uuid");

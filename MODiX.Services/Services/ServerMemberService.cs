@@ -41,7 +41,7 @@ namespace MODiX.Services.Services
             var localMember = db!.ServerMembers!.Where(x => x.UserId == member.Id.ToString()).FirstOrDefault();
 
             if (localMember is not null) return Result<Member, string>.Err("failure: member already exists in database.")!;
-           
+
             var newMember = new LocalServerMember
             {
                 Nickname = member.Name,
@@ -53,10 +53,19 @@ namespace MODiX.Services.Services
                 RoleIds = [.. roles],
                 Wallet = new Wallet()
                 {
+                    Identifier = Guid.NewGuid(),
                     MemberId = member.Id.ToString(),
                     ServerId = serverId.ToString(),
                     Points = 0
+                },
+                Bank = new Bank()
+                {
+                    Identifier = Guid.NewGuid(),
+                    AccountTotal = 0,
+                    DepositedAt = "",
+                    ServerId = serverId.ToString()
                 }
+
             };
 
             await db!.AddAsync(newMember);
