@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
+using System.Reactive.Linq;
 using Guilded.Base;
 using Guilded.Base.Embeds;
 using Guilded.Commands;
@@ -272,77 +273,101 @@ namespace MODiX.Commands.Commands
         #region PURGE
         [Command(Aliases = new string[] { "purge", "p" })]
         [Description("removes a set amount of channel messages")]
-        public async Task Purge(CommandEvent invokator, uint amount)
+        public async Task Purge(CommandEvent invokator, uint amount = 0)
         {
-            var authorId = invokator.Message.CreatedBy;
-            var serverId = invokator.Message.ServerId;
-            var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
-            var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, authorId);
-            
+
             try
             {
-                if (permissions.Contains(Permission.ManageChannels))
-                {
-                    var channelId = invokator.ChannelId;
-                    var channel = await invokator.ParentClient.GetChannelAsync(channelId);
+                var authorId = invokator.Message.CreatedBy;
+                var serverId = invokator.ServerId;
+                var author = await invokator.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
+                var permissions = await invokator.ParentClient.GetMemberPermissionsAsync((HashId)serverId!, authorId);
 
-                    if (amount <= 100)
+                if (permissions.Contains(Permission.ManageMessages))
+                {
+                    if (amount < 1 || amount > 99)
                     {
-                        var messages = await invokator.ParentClient.GetMessagesAsync(channelId, false, amount); // here we can specify a before date. Im thinking about it
-                        foreach (var m in messages)
+                        amount = 10;
+                        var embed = new Embed();
+                        var emotes = new uint[] { 2279747, 2279746 };
+                        embed.SetDescription("no amount was specified, default amount is set to 99\r\n" +
+                            "would you like to proceed");
+                        var warningMsg = await invokator.ReplyAsync(embed);
+                        foreach (var emote in emotes)
                         {
-                            await m.DeleteAsync();
-                            await Task.Delay(100);
+                            await warningMsg.AddReactionAsync(emote);
                         }
 
-                        var time = string.Format("{0:hh:mm:ss tt}", DateTime.Now);
-                        var date = DateTime.Now.ToShortDateString();
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine($"[{date}][{time}][INFO]  [MODiX] {author.Name} deleted {amount} messages from [{channel.Name}]");
-                        Console.ForegroundColor = ConsoleColor.DarkYellow;
-                        var embed = new Embed()
-                        {
-                            Description = $"{amount} messages deleted",
-                            Color = EmbedColorService.GetColor("orange", Color.Orange),
-                            Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
-                            Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
-                            Timestamp = DateTime.Now
-                        };
-                        var deleteMessage = await invokator.CreateMessageAsync(embed);
+                        invokator.ParentClient.MessageReactionAdded
+                                     .Where(e => e.CreatedBy == invokator.CreatedBy)
+                                     .Subscribe(async reaction =>
+                                     {
+
+                                         if (reaction.Name == "check-mark")
+                                         {
+                                             if (permissions.Contains(Permission.ManageMessages))
+                                             {
+                                                 var messages = await invokator.ParentClient.GetMessagesAsync(invokator.ChannelId, false, amount);
+                                                 await Task.Delay(200);
+                                                 foreach (var msg in messages)
+                                                 {
+                                                     await msg.DeleteAsync();
+                                                     await Task.Delay(100);
+                                                 }
+                                                 embed.SetDescription($"<@{authorId}> used the purge command and deleted {amount} messages");
+                                                 embed.SetFooter("Pinkerton ");
+                                                 embed.SetTimestamp(DateTime.Now);
+                                                 await invokator.CreateMessageAsync(embed);
+                                             }
+
+                                         }
+                                         else
+                                         {
+                                             embed.SetTitle("❌command canceled❌");
+                                             embed.SetDescription($"<@{authorId}> canceled the purge command");
+                                             embed.SetThumbnail(new EmbedMedia("https://cdn.gilcdn.com/MediaChannelUpload/c8a5997177bb399a00120fafb60a52ad-Full.webp?w=160&h=160"));
+                                             embed.SetFooter("Pinkerton ");
+                                             embed.SetTimestamp(DateTime.Now);
+                                             await invokator.CreateMessageAsync(embed);
+                                             return;
+                                         }
+                                     });
+
                     }
                     else
                     {
-                        var embed = new Embed()
+                        var embed = new Embed();
+                        var messages = await invokator.ParentClient.GetMessagesAsync(invokator.ChannelId, false, amount);
+                        foreach (var msg in messages)
                         {
-                            Description = $"<@{author.Id}> to many messages, the limit is 100. to set limit run command **purge setlimit amount**",
-                            Color = EmbedColorService.GetColor("orange", Color.Orange),
-                            //Thumbnail = new EmbedMedia("https://i.imgur.com/BlC9X8b.png"),
-                            Footer = new EmbedFooter($"{invokator.ParentClient.Name} watching everything."),
-                            Timestamp = DateTime.Now
-                        };
-                        await invokator.ReplyAsync(embed);
+                            await msg.DeleteAsync();
+                            await Task.Delay(100);
+                        }
+                        embed.SetDescription($"<@{authorId}> used the purge command and deleted {amount} messages");
+                        embed.SetFooter("Pinkerton ");
+                        embed.SetTimestamp(DateTime.Now);
+                        await invokator.CreateMessageAsync(embed);
                     }
-
 
                 }
                 else
                 {
-                    var newEmbed = new Embed();
-                    newEmbed.SetTitle($"<@{author.Id}> you do not have the permission to manage channels, command ignored!");
-                    newEmbed.SetFooter("MODiX watching everything ");
-                    newEmbed.SetTimestamp(DateTime.Now);
-                    await invokator.ReplyAsync(newEmbed);
+                    await invokator.ReplyAsync($"{author.Name} you do not have the correct permissions to perform this command, command ignored");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                var newEmbed = new Embed();
-                newEmbed.SetTitle($"<@{author.Id}> you do not have the permission to manage channels, command ignored!");
-                newEmbed.SetFooter("MODiX watching everything ");
-                newEmbed.SetTimestamp(DateTime.Now);
-                await invokator.ReplyAsync(newEmbed);
+                var log = new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = e.Message
+                };
+                using var db = dbFactory.CreateDbContext();
+                db.Errors.Add(log);
+                await db.SaveChangesAsync();
+                await invokator.ReplyAsync($"{log.ErrorMessage}: please refer [{log.ErrorCode}] to a moderator for further review.");
             }
-            
+
         }
         #endregion
 

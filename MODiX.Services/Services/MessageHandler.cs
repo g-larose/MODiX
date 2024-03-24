@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AngleSharp.Html.Dom;
@@ -21,7 +22,7 @@ namespace MODiX.Services.Services
 {
     public class MessageHandler : IMessageHandler, IDisposable
     {
-        public Message? Message { get; set; }
+        public string? Message { get; set; }
         public AbstractGuildedClient? Client { get; set; }
         private string? MessageAuthor { get; set; }
         private uint MessageCount { get; set; }
@@ -30,13 +31,13 @@ namespace MODiX.Services.Services
 
         public MessageHandler(AbstractGuildedClient? client, Message? message = null)
         {
-            Message = message;
+            Message = message?.Content;
             Client = client;
         }
 
         public async Task HandleMessageAsync(Message message)
         {
-            this.Message = message;
+            this.Message = message?.Content;
             var authorId = message.CreatedBy;
             var serverId = message.ServerId;
             var channelId = message.ChannelId;
@@ -46,7 +47,7 @@ namespace MODiX.Services.Services
                 var author = await message.ParentClient.GetMemberAsync((HashId)serverId!, authorId);
                 if (author.IsBot) return;
 
-                if (message!.Content!.Equals(Message!.Content))
+                if (message!.Content!.Equals(Message))
                 {
                     MessageAuthor = author.Name;
                     MessageCount++;
@@ -59,7 +60,7 @@ namespace MODiX.Services.Services
                             await Task.Delay(100);
                         }
 
-                        
+
                         embed.SetDescription($"<@{author.Id}> you are sending the same message to fast, slow down or you will be muted!");
                         embed.SetColor(EmbedColorService.GetColor("gray", Color.Gray));
                         await message.ReplyAsync(embed);
@@ -72,11 +73,16 @@ namespace MODiX.Services.Services
                 {
                     MessageCount = 1;
                     MessageAuthor = author.Name;
-                    Message = message;
+                    Message = message.Content;
                 }
 
                 //filter the links from the message
                 var filtered = await FilterMessageAsync(message);
+                if (!filtered.IsOk)
+                {
+                    await message.DeleteAsync();
+                    await message.ReplyAsync($"{author.Name} {filtered.Error} and has been removed.");
+                }
                 Dispose();
             }
             catch (Exception e)
@@ -92,27 +98,33 @@ namespace MODiX.Services.Services
         #region FILTER MESSAGE
         private async Task<Result<bool, string>> FilterMessageAsync(Message msg)
         {
+            //7zZsro9PvWHQG64UX8nQGt61zZikoCAg
             var pattern = @"(?:https?|ftp):\/\/(?:[\w-]+\.)+[\w-]+(?:\/[\w@?^=%&/~+#-]*)?|guilded\.gg|discord\.gg";
-            var regex = new Regex(pattern);
-
-            if (regex.IsMatch(msg.Content!))//convert this into a switch expression to handle different senerios.
+            var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var postReqValues = new Dictionary<string, string>()
             {
-                if (msg.ChannelId.Equals(""))
-                    return Result<bool, string>.Err("could not find channel")!;
-                var author = await msg.ParentClient.GetMemberAsync((HashId)msg.ServerId!, msg.CreatedBy);
-                var channelId = msg.ChannelId;
-                var permissions = await author.GetPermissionsAsync();
-                if (!permissions.Contains(Permission.ManageChannels))
+                {"stricktness", "1" },
+                {"fast", "true" }
+            };
+
+            HttpClient client = new HttpClient();
+            var content = new FormUrlEncodedContent(postReqValues);
+
+            foreach (Match match in regex.Matches(msg.Content))
+            {
+                string url = match.Value.Replace(":", "%3A").Replace("/", "%2F");
+                HttpResponseMessage response = await client.PostAsync($"https://www.ipqualityscore.com/api/json/url/7zZsro9PvWHQG64UX8nQGt61zZikoCAg/{url}", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+                UrlScanner parsedResponse = JsonSerializer.Deserialize<UrlScanner>(responseString)!;
+                
+                if (parsedResponse.adult.Equals(true) || parsedResponse.@unsafe.Equals(true) || parsedResponse.suspicious.Equals(true))
                 {
-                    var embed = new Embed();
-                    await msg.ParentClient.DeleteMessageAsync(channelId, msg.Id);
-                    embed.SetDescription($"<@{author.Id}> your message contained block content and was removed");
-                    embed.SetColor(EmbedColorService.GetColor("gray", Color.Gray));
-                    await msg.ReplyAsync(embed);
-                    return Result<bool, string>.Ok(true)!;
+                    return Result<bool, string>.Err("link found to be unsafe and/or adult content. link was also found to be malicous.")!;
                 }
+                break;
             }
-            return false;
+            
+            return Result<bool, string>.Ok(true)!;
         }
         #endregion
 
@@ -125,3 +137,4 @@ namespace MODiX.Services.Services
         #endregion
     }
 }
+
