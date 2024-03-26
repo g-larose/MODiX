@@ -62,13 +62,13 @@ namespace MODiX.Commands.Commands
         #region PROFILE
         [Command(Aliases = new string[] { "profile" })]
         [Description("gets the triggering users member info")]
-        public async Task Profile(CommandEvent invokator, string mentions = "")
+        public async Task Profile(CommandEvent invokator, [CommandParam]string mentions)
         {
             ServerMemberService memService = new(invokator.ParentClient);
             try
             {
                 var embed = new Embed();
-                if (mentions is null || mentions.Equals(""))
+                if (invokator.Mentions is null)
                 {
                     var authorId = invokator.Message.CreatedBy;
                     var serverId = invokator.ServerId;

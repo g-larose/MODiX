@@ -352,7 +352,7 @@ namespace MODiX.Commands.Commands
                 }
                 else
                 {
-                    await invokator.ReplyAsync($"{author.Name} you do not have the correct permissions to perform this command, command ignored");
+                    await invokator.ReplyAsync($"{author.Name} you do not have the correct permissions to perform this command, command ignored", null, null, true);
                 }
             }
             catch (Exception e)

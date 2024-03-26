@@ -14,6 +14,8 @@ namespace MODiX.Data.Models
         public double AccountTotal { get; set; }
         public string? ServerId { get; set; }
         public string? DepositedAt { get; set; }
+        public DateTimeOffset LastDaily { get; set; }
         public LocalServerMember ServerMember { get; set; }
+
     }
 }

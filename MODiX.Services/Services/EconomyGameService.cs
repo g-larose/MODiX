@@ -7,6 +7,7 @@ using MODiX.Services.BaseModules;
 using MODiX.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -77,6 +78,33 @@ namespace MODiX.Services.Services
                 daily += 2000;
             return Result<int, SystemError>.Ok(daily)!;
         }
+        #endregion
+
+        #region IS VALID DAILY
+
+        public Result<bool, SystemError> IsValidDaily(string memberId)
+        {
+            using var db = _dbFactory!.CreateDbContext();
+            var mem = db.ServerMembers!.Where(x => x.UserId!.Equals(memberId)).Include(b => b.Bank).FirstOrDefault();
+            if (mem is null)
+            {
+                //no member in the db return SystemError
+                return Result<bool, SystemError>.Err(new SystemError()
+                {
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "not found, member does not exist in the database, run m?addmem member to add the member to the database"
+                })!;
+            }
+            else
+            {
+                DateTime pDate;
+                var daily = mem.Bank.LastDaily;
+                var now = DateTime.UtcNow;
+                var isValid = now > daily;
+                return Result<bool, SystemError>.Ok(isValid)!;
+            }
+        }
+
         #endregion
 
         #region GET HOBBY

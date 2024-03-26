@@ -9,6 +9,7 @@ using MODiX.Data.Models;
 using MODiX.Services.Features.Economy;
 using MODiX.Services.Interfaces;
 using MODiX.Services.Services;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -31,19 +32,18 @@ namespace MODiX.Commands.Commands
         {
 
             var memberId = invokator.Message.CreatedBy;
+            var canGetDaily = gameService.IsValidDaily(memberId.ToString());
             var daily = gameService.GetDaily();
-            if (daily.IsOk)
+            if (daily.IsOk && canGetDaily.IsOk)
             {
                 using var db = _dbFactory.CreateDbContext();
                 var localMember = db?.ServerMembers?.Where(x => x.UserId!.Equals(memberId.ToString()))
                     .Include(w => w.Wallet)
                     .FirstOrDefault();
-                var walletPoints = 0;
-                var bankTotal = 0;
-
+                
                 if (localMember is null)
                 {
-                    // member not in database, add member to database.
+                    await invokator.ReplyAsync("member is not in the database!");
                 }
                 else
                 {
@@ -59,12 +59,12 @@ namespace MODiX.Commands.Commands
                 using var db = _dbFactory.CreateDbContext();
                 var systemError = new SystemError()
                 {
-                    ErrorCode = daily.Error.ErrorCode,
-                    ErrorMessage = daily.Error.ErrorMessage
+                    ErrorCode = Guid.NewGuid(),
+                    ErrorMessage = "An error occured."
                 };
                 db.Add(systemError);
                 await db.SaveChangesAsync();
-                await invokator.ReplyAsync($"{daily.Error.ErrorMessage}, please refer {daily.Error.ErrorCode} to a dev.");
+                await invokator.ReplyAsync($"{systemError.ErrorMessage}, please refer {systemError.ErrorCode} to a dev.");
             }
            
 
