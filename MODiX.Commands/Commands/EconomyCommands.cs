@@ -13,6 +13,7 @@ using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,6 +33,8 @@ namespace MODiX.Commands.Commands
         {
 
             var memberId = invokator.Message.CreatedBy;
+            var serverId = invokator.ServerId;
+            var server = await invokator.ParentClient.GetServerAsync((HashId)serverId!);
             var canGetDaily = gameService.IsValidDaily(memberId.ToString());
             var daily = gameService.GetDaily();
             if (daily.IsOk && canGetDaily.IsOk)
@@ -39,6 +42,7 @@ namespace MODiX.Commands.Commands
                 using var db = _dbFactory.CreateDbContext();
                 var localMember = db?.ServerMembers?.Where(x => x.UserId!.Equals(memberId.ToString()))
                     .Include(w => w.Wallet)
+                    .Include(b => b.Bank)
                     .FirstOrDefault();
                 
                 if (localMember is null)
@@ -49,6 +53,7 @@ namespace MODiX.Commands.Commands
                 {
                     await invokator.ReplyAsync($"you finished daily task and received 💰{daily.Value}💰 gold");
                     localMember.Wallet.Points += daily.Value;
+                    localMember.Bank.LastDaily = DateTimeOffset.UtcNow;
                     db.Update(localMember);
                     await db.SaveChangesAsync();
                 }
@@ -56,15 +61,18 @@ namespace MODiX.Commands.Commands
             }
             else
             {
-                using var db = _dbFactory.CreateDbContext();
-                var systemError = new SystemError()
-                {
-                    ErrorCode = Guid.NewGuid(),
-                    ErrorMessage = "An error occured."
-                };
-                db.Add(systemError);
-                await db.SaveChangesAsync();
-                await invokator.ReplyAsync($"{systemError.ErrorMessage}, please refer {systemError.ErrorCode} to a dev.");
+                var error = canGetDaily.Error;
+                error.ServerId = serverId.ToString();
+                error.ServerName = server.Name;
+
+                var embed = new Embed();
+                embed.SetTitle("❌ To Soon ❌");
+                embed.SetDescription($"{error.ErrorMessage}");
+                embed.SetThumbnail(new EmbedMedia("https://cdn.gilcdn.com/MediaChannelUpload/c8a5997177bb399a00120fafb60a52ad-Full.webp?w=160&h=160"));
+                embed.SetColor(EmbedColorService.GetColor("red", Color.DarkRed));
+                embed.SetFooter("MODiX watching everything ");
+                embed.SetTimestamp(DateTime.UtcNow);
+                await invokator.ReplyAsync(embed);
             }
            
 

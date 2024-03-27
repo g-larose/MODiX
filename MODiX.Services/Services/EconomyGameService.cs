@@ -92,15 +92,21 @@ namespace MODiX.Services.Services
                 return Result<bool, SystemError>.Err(new SystemError()
                 {
                     ErrorCode = Guid.NewGuid(),
-                    ErrorMessage = "not found, member does not exist in the database, run m?addmem member to add the member to the database"
+                    ErrorMessage = "not found, member does not exist in the database, run m?addmem memberId to add the member to the database"
                 })!;
             }
             else
             {
                 DateTime pDate;
-                var daily = mem.Bank.LastDaily;
-                var now = DateTime.UtcNow;
+                var daily = mem.Bank.LastDaily.Day;
+                var now = DateTimeOffset.UtcNow.Day;
                 var isValid = now > daily;
+                if (!isValid)
+                    return Result<bool, SystemError>.Err(new SystemError()
+                    {
+                        ErrorCode = Guid.NewGuid(),
+                        ErrorMessage = "daily was already given today."
+                    })!;
                 return Result<bool, SystemError>.Ok(isValid)!;
             }
         }

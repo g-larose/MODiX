@@ -15,6 +15,10 @@ namespace MODiX.Data.Models
         public string? ServerId { get; set; }
         public string? DepositedAt { get; set; }
         public DateTimeOffset LastDaily { get; set; }
+        public DateTimeOffset LastWork { get; set; }
+        public DateTimeOffset LastCommunity { get; set; }
+        public DateTimeOffset LastHobby { get; set; }
+        public DateTimeOffset LastChores { get; set; }
         public LocalServerMember ServerMember { get; set; }
 
     }
